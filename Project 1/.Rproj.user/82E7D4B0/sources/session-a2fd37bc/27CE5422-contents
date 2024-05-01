@@ -125,6 +125,9 @@ df <- df %>%
 
 df$ci[(nrow(df) - 14):nrow(df)] <- fc$value
 
+ci_list <- as.list(fc$value)
+ci_list[1]
+
 
 # Plot final df
 df <- tsibble(df, index = date)
