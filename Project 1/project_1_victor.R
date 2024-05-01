@@ -147,7 +147,7 @@ report(fit)
 
 fc <- fit |> forecast(h = "15 months")
 fc |> autoplot(df_nocovid) +
-  ggtitle("Forecast of monthly visitors to Vaud") +
+  ggtitle("Forecast of monthly Filipino visitors to Ticino") +
   ylab("Visitors") +
   xlab("Months")
 
@@ -155,7 +155,7 @@ fc |> autoplot(df_nocovid) +
 df$date <- yearmonth(df$date)
 
 fc |> autoplot(df) +
-  ggtitle("Forecast of monthly visitors to Vaud") +
+  ggtitle("Forecast of monthly Filipino visitors to Ticino") +
   ylab("Visitors") +
   xlab("Months")
 
