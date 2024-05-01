@@ -3,7 +3,7 @@
     "path": "~/GitHub/Forecasting_G9/Project 1/project_1_victor.R",
     "project_path": "project_1_victor.R",
     "type": "r_source",
-    "hash": "4099008838",
+    "hash": "3952817767",
     "contents": "",
     "dirty": false,
     "created": 1714567500847.0,
@@ -12,15 +12,15 @@
     "properties": {
         "source_window_id": "",
         "Source": "Source",
-        "cursorPosition": "128,10",
-        "scrollLine": "120"
+        "cursorPosition": "96,106",
+        "scrollLine": "96"
     },
     "folds": "",
-    "lastKnownWriteTime": 1714573250,
+    "lastKnownWriteTime": 1714595170,
     "encoding": "UTF-8",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1714573250031,
+    "last_content_update": 1714595170056,
     "read_only": false,
     "read_only_alternatives": []
 }
