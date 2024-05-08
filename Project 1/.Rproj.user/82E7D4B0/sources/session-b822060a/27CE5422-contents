@@ -2,6 +2,7 @@
 library(tidyverse)
 library(lubridate)
 library(fpp3)
+library(patchwork)
 
 # Load data
 df <- read.csv("Dataset_tourism.csv")
@@ -24,10 +25,21 @@ sum(is.na(df$value)) # 51395 NAs
 sum(is.na(df$Kanton)) # 0 NAs
 sum(is.na(df$Herkunftsland)) # 0 NAs
 
+# EDA #################################################
+
+# tsibble plot: there are no extreme values except for the drop during covid.
+
+# STL: see stl decompositions below on df_nocovid
+
+# ACF plots: see below on df_nocovid
+
+#########################################################
+
 ### 1. Predict total visitors between Oct 2023 and Dec 2024
 
 # Subset dataframe to remove nationalities and cantons, and keep totals.
 df <- df[df$Herkunftsland == "Herkunftsland - Total" & df$Kanton == "Vaud", ]
+
 
 # Transform df to tsibble
 df <- tsibble(df, index = date)
@@ -63,13 +75,26 @@ df_nocovid <- df_nocovid[df_nocovid$covid != 1, ]
 # Add 2 years from data before covid
 df_nocovid$date[df_nocovid$date < ymd("2022-03-01")] <- df_nocovid$date[df_nocovid$date < ymd("2022-03-01")] + years(2)
 
-
 df_nocovid <- tsibble(df_nocovid, index = date)
 
 df_nocovid |> autoplot(value) +
   ggtitle("Monthly visitors to Vaud") +
   ylab("Visitors") +
   xlab("Months")
+
+# STL decomposition (EDA)
+df_nocovid$date <- yearmonth(df_nocovid$date)
+df_nocovid <- tsibble(df_nocovid, index = date)
+df_stl <- df_nocovid %>% model(STL(value))
+components(df_stl) %>% autoplot()
+
+# ACF plot
+df_nocovid <- df_nocovid %>% mutate(diff_value = difference(value))
+df_nocovid %>% autoplot(diff_value)
+
+p1 <- df_nocovid %>% ACF(value) %>% autoplot()
+p2 <- df_nocovid %>% ACF(diff_value) %>% autoplot()
+p1 + p2
 
 # Now we can run models on the data without gaps and reset the dates afterwards.
 
@@ -135,6 +160,20 @@ df_nocovid |> autoplot(value) +
   ggtitle("Monthly Filipino visitors to Ticino") +
   ylab("Visitors") +
   xlab("Months")
+
+# STL decomposition (EDA)
+df_nocovid$date <- yearmonth(df_nocovid$date)
+df_nocovid <- tsibble(df_nocovid, index = date)
+df_stl <- df_nocovid %>% model(STL(value))
+components(df_stl) %>% autoplot()
+
+# ACF plot
+df_nocovid <- df_nocovid %>% mutate(diff_value = difference(value))
+df_nocovid %>% autoplot(diff_value)
+
+p1 <- df_nocovid %>% ACF(value) %>% autoplot()
+p2 <- df_nocovid %>% ACF(diff_value) %>% autoplot()
+p1 + p2
 
 # Now we can run models on the data without gaps and reset the dates afterwards.
 

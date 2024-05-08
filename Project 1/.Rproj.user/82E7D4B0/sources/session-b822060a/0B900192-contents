@@ -197,7 +197,7 @@ GDP.Vaud <- data.frame(
 print(GDP.Vaud)
 
 #Merging the datasets
-str(df$date)
+str(df$Date)
 str(Payerne_weather$Date)
 str(GDP.Vaud$Date)
 df_weather_merged <- df |> 
