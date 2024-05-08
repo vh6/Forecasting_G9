@@ -3,24 +3,24 @@
     "path": "~/GitHub/Forecasting_G9/Project 1/project.Reisa2.R",
     "project_path": "project.Reisa2.R",
     "type": "r_source",
-    "hash": "182182612",
+    "hash": "0",
     "contents": "",
-    "dirty": false,
+    "dirty": true,
     "created": 1715166792616.0,
     "source_on_save": false,
     "relative_order": 6,
     "properties": {
         "source_window_id": "",
         "Source": "Source",
-        "cursorPosition": "183,36",
-        "scrollLine": "160"
+        "cursorPosition": "205,0",
+        "scrollLine": "193"
     },
     "folds": "",
     "lastKnownWriteTime": 1715167288,
     "encoding": "UTF-8",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1715167288444,
+    "last_content_update": 1715171457840,
     "read_only": false,
     "read_only_alternatives": []
 }

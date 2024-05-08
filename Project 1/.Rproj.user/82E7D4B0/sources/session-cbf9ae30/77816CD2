@@ -1,9 +1,9 @@
 {
     "id": "77816CD2",
-    "path": "~/GitHub/Forecasting_G9/Project 1/project.Reisa.R",
-    "project_path": "project.Reisa.R",
+    "path": "~/GitHub/Forecasting_G9/Project 1/project Reisa final.R",
+    "project_path": "project Reisa final.R",
     "type": "r_source",
-    "hash": "3029216262",
+    "hash": "797808882",
     "contents": "",
     "dirty": false,
     "created": 1714986979934.0,
@@ -12,15 +12,15 @@
     "properties": {
         "source_window_id": "",
         "Source": "Source",
-        "cursorPosition": "15,48",
-        "scrollLine": "0"
+        "cursorPosition": "247,0",
+        "scrollLine": "235"
     },
     "folds": "",
-    "lastKnownWriteTime": 1714988782,
+    "lastKnownWriteTime": 1715171685,
     "encoding": "UTF-8",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1714988782896,
+    "last_content_update": 1715171685246,
     "read_only": false,
     "read_only_alternatives": []
 }
