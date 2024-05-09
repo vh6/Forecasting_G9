@@ -1,0 +1,5 @@
+show limitations of our model, what are it's weaknesses and strengths
+
+Maybe compare with other methods, it's up to us
+
+idea: compare to mean model or the last value?? not very good

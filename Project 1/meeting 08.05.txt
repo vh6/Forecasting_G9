@@ -1,0 +1,4 @@
+we should choose model with lowest aic
+Low confidence interval does not necessarily mean good prediction.
+
+Include only graphs and info that are relevant in the report.

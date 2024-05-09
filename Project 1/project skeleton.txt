@@ -1,0 +1,16 @@
+Intro
+
+EDA
+- explain how we cleaned the data
+- decomposition trend, seasonality, error graphs ( STL decomposition)
+- Plot correlation of visitor history with temp and gdp
+
+Models
+- First arima models
+- Modified models
+
+Results/Discussion
+- Comparison, decide which model is better, explain strengths & weaknesses, limits...
+
+Conclusion
+
