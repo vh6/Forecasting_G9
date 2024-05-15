@@ -1,143 +1,142 @@
-# 3. Exploratory data analysis
+---
+editor: 
+  markdown: 
+    wrap: sentence
+---
+
+# Exploratory Data Analysis (EDA)
 
 ```{r, echo = FALSE, message = FALSE}
 (here::here("scripts/setup.R"))
 ```
 
-## 3.1 Real Estate
+#### Loading Packages
 
-In our exploratory data analysis (EDA) on real estate data in France spanning the years 2014 to 2021, we aim to generate meaningful visualizations that shed light on the dynamics within this dataset. Beyond internal real estate factors such as transaction numbers, property types, and pricing trends, we intend to integrate external variables like criminality rates, interest rates, unemployment rates, and population statistics. By incorporating these additional dimensions, we seek a comprehensive understanding of how real estate trends align or diverge in relation to broader socio-economic indicators. Through the creation of informative graphs, we aspire to visually represent and analyze the interplay between real estate dynamics and various external factors over the specified time period, facilitating a more nuanced interpretation of the dataset for our class project.
+This block of code loads several essential packages that are used throughout the data analysis.
+Each package serves a specific function, from data manipulation and visualization to time series forecasting.
 
-#### Population range 
-
-In our analysis, we collectively categorized the population into four layers  Low, Moderate, High, and Very High—based on quartiles. This segmentation allows us to explore how population size influences variables like crime rates, unemployment, and property prices. By aggregating data and calculating average values for each layer, we gain insights into the unique impact of population size on these factors. Visualizing these relationships through plots helps us identify trends across different population layers.
-
-```{r, echo = TRUE, message = FALSE}
-# Load required libraries
-PrixPopCrimeYearChomInt_vf <- read_csv("~/MyDoc/University/Master/Management/DATA/FINAL_WORK/DSFBA/dataset_vf/PrixPopCrimeYearChomInt_vf.csv")
-
+```{r}
+# Load packages
+library(tidyverse)
+library(lubridate)
+library(fpp3)
+library(stats)
 library(dplyr)
-
-# Calculate summary statistics for population across all departments
-summary_population <- PrixPopCrimeYearChomInt_vf %>%
-  summarise(
-    Min_POP = min(POP),
-    Q25_POP = quantile(POP, 0.25),
-    Median_POP = median(POP),
-    Q75_POP = quantile(POP, 0.75),
-    Max_POP = max(POP)
-  )
-
-summary_table <- summary_population %>%
-  kable("html") %>%
-  kable_styling(full_width = FALSE)
-
-summary_table
+library(ggplot2)
+library(fable)
+library(tsibble)
+library(fabletools)
+library(patchwork)
 
 ```
 
-### 3.1.1 Dwelling Transactions: Mutations
+This block of code loads several essential packages that are used throughout the data analysis.
+Each package serves a specific function, from data manipulation and visualization to time series forecasting.
+
+#### Loading and Preparing Data
+
+```{r, echo = TRUE, message = FALSE}
+# Load data
+df <- read.csv("Dataset_tourism.csv", stringsAsFactors = FALSE)
+
+# Translate Monat column to English
+german_months <- c("Januar", "Februar", "März", "April", "Mai", "Juni", 
+                   "Juli", "August", "September", "Oktober", "November", "Dezember")
+english_months <- month.name
+
+# Replace German month names with English month names
+df$Monat <- factor(df$Monat, levels = german_months, labels = english_months)
+```
+
+Here, the code loads a dataset from a CSV file.
+It also handles the conversion of German month names into English, ensuring the data is accessible and ready for analysis.
+This step is crucial for preparing the dataset for time-series analysis, as date formatting must be consistent.
+
+#### Counting Missing Values
 
 ```{r,echo = TRUE}
 
-mainXpop2 <- read.csv("/Users/victorregly/MyDoc/University/Master/Management/DATA/Dataset/mainXpop2.csv")
+# Count NAs
+sum(is.na(df$Jahr)) # 0 NAs
+sum(is.na(df$Monat)) # 0 NAs
+sum(is.na(df$date)) # 0 NAs
+sum(is.na(df$value)) # 51395 NAs
+sum(is.na(df$Kanton)) # 0 NAs
+sum(is.na(df$Herkunftsland)) # 0 NAs
 
-# Create a table for DEPARTEMENT with less than 400 unique values
-departement_table <- mainXpop2 %>%
-  count(DEPARTEMENT, PLACE) %>%  # Include the PLACE column in the count
-  filter(n < 400) %>%
-  gt() %>%
-  fmt_number(columns = c(n), decimals = 0)  # Optional: Format the 'n' column
-
-# Print the table
-departement_table
 ```
-The table below highlights instances in the dataset where a department contains fewer than 400 unique values, potentially leading to non-significant data points.
+
+This segment of code counts and reports the number of missing (NA) values in various columns of the dataset.
+This is an important step to identify and address any data quality issues before proceeding with further analysis.
+
+#### Forecasting Total Visitors to Vaud
+
+This section outlines the methodology for predicting the number of visitors to Vaud, focusing on handling the dataset to ensure accurate and unbiased forecasting.
+
+#### Data Preparation
 
 ```{r, echo = TRUE, warning = FALSE}
 
-mainXpop2 <- read.csv("/Users/victorregly/MyDoc/University/Master/Management/DATA/Dataset/mainXpop2.csv")
-                      
-# Créez les tranches
-tranches <- c(0, 5 , 10 , 50, 100, 1000, Inf)
+# Subset dataframe to remove nationalities and cantons, and keep totals.
+df <- df[df$Herkunftsland == "Herkunftsland - Total" & df$Kanton == "Vaud", ]
 
-# Ajoutez une nouvelle colonne "Tranches" à votre dataframe
-mainXpop2$Tranches <- cut(mainXpop2$Nb_mutations, breaks = tranches, labels = c("0-5","6-10", "11-50", "51-100", "101-1000", "1000+"), include.lowest = TRUE)
-
-# Créez un histogramme
-histogram <- table(mainXpop2$Tranches)
-
-# Désactiver la notation scientifique pour l'axe y
-options(scipen = 999)
-
-# Dessinez l'histogramme avec l'axe y en notation décimale
-barplot(histogram, mainXpop2 = "Histogram of Nb_mutations per group", xlab = "Group", ylab = "Frequency", col = "orange", border = "black")
 ```
-This code segment categorizes the number of sales in property and house transactions into specific ranges or "tranches" to better understand the distribution of sales counts. The purpose is to address potential skewness in the data and gain insights into transaction frequency patterns. By creating a categorical variable and visualizing the data through a histogram, the analysis aims to discern patterns in transaction frequency and improve the accuracy of insights, especially when dealing with very low mutation values that occur more frequently. This approach recognizes the importance of considering transaction frequency when computing averages to provide more reliable insights into real estate dynamics.
 
-#### Transactions by type of good 
+The initial step involves subsetting the data to focus specifically on the overall visitor statistics for the canton of Vaud, removing entries related to specific nationalities and other cantons.
+This ensures that the analysis is targeted and relevant to the specific geographic area of interest.
+
+#### Time Series Data Transformation
 
 ```{r, echo = TRUE}
+# Transform df to tsibble
+df <- tsibble(df, index = date)
 
-dataset <- read.csv("/Users/victorregly/MyDoc/University/Master/Management/DATA/Dataset/dataset.csv")
-
-# Aggregate the data by year
-aggregated_data <- aggregate(cbind(NbMaisons_total, NbApparts_total) ~ Annee, data = dataset, sum)
-
-# Transform the data into long format
-aggregated_data_long <- gather(aggregated_data, key = "Type", value = "Total", -Annee)
-
-# Create a ggplot2 chart
-p <- ggplot(aggregated_data_long, aes(x = Annee, y = Total, fill = Type)) +
-  geom_bar(stat = "identity", position = position_dodge(width = 0.8)) +
-  geom_line(aes(x = Annee, y = Total, group = Type, color = Type), linetype = "dashed", size = 1) +
-  labs(title = "Total number of house and apartment sales per year",
-       y = "Total number of sales",
-       x = "Year") +
-  scale_fill_manual(values = c("NbMaisons_total" = "blue", "NbApparts_total" = "red")) +
-  scale_color_manual(values = c("NbMaisons_total" = "blue", "NbApparts_total" = "red")) +
-  theme_minimal()
-
-# Convert ggplot2 chart to plotly
-p_plotly <- ggplotly(p, height = 400, width = 750)
-
-p_plotly <- p_plotly %>%
-  layout(
-    title = list(text = "Total number of house and apartment sales per year", font = list(size = 14)),
-    margin = list(l = 50, r = 50, b = 50, t = 80)
-  )
-
-# Display the interactive plot
-p_plotly
 ```
 
-This graphic presents a comprehensive overview of housing and apartment sales from 2014 to 2021, categorizing the data by transaction volume per year. The resulting bar chart reveals a general upward trend in sales, with an interesting peak in the mid-years. However, there is a noticeable variation in 2017 where the sales volume unexpectedly dips. This trend suggests potential market trends or economic factors such as interest rate changes, policy adjustments, or shifts in buyer sentiment, prompting a deeper look into market dynamics, financial influences, and regulatory impacts. The objective of this code-driven analysis is to uncover the driving forces behind the transaction volumes, providing a clearer picture of the real estate market's health and direction, and identifying any cyclical patterns or irregularities that could inform future market predictions and investment strategies.
+The data is then transformed into a tsibble, a time series data frame that facilitates handling and modeling time series in a tidyverse-compatible way.
+This format is particularly useful for the subsequent steps in time series analysis and forecasting.
 
-#### Transactions by group 
+#### Visualization of Visitor Trends
 
 ```{r, echo = TRUE, message = FALSE, out.width='100%'}
-data <- read_delim("~/MyDoc/University/Master/Management/DATA/FINAL_WORK/DSFBA/dataset_vf/PrixPopCrimeYearChomIntInf_vf3.csv", delim = ";", escape_double = FALSE, trim_ws = TRUE)
-new_data <- data %>%
-  group_by(Year, Group) %>%
-  summarise(house = sum(NbHouses), appart = sum(NbApparts))
+# Plot visitors
+df |> autoplot(value) +
+  ggtitle("Monthly visitors to Vaud") +
+  ylab("Visitors") +
+  xlab("Months")
 
-# Reshape the data for plotting
-plot_data <- tidyr::gather(new_data, key = "Type", value = "Count", -Year, -Group)
+# We see an upwards trend with seasonality, and a little bit of noise. We also see a strong dip in the amount of visitors during COVID, which will bias our model.
+# We will add a dummy variable for all observations during covid, so we may remove them when creating a model in order to not bias our model.
+# We consider COVID to be a black swan, and a unique event, and we will assume that it will not happen again during the period that we are predicting (Oct 23 - Dec 24).
+# Lockdown started in March 2020, and all measures except masks were lifted indefinitely in February 2022.
 
-# Plotting the number of houses and apartments for each year, group, and type
-ggplot(plot_data, aes(x = Year, y = Count, fill = Type)) +
-  geom_bar(stat = "identity", position = "dodge") +
-  geom_line(aes(group = Type, linetype = Type), position = position_dodge(0.9), size = 0.9) +
-  scale_linetype_manual(values = c("solid", "dashed")) +  # Set line types
-  facet_wrap(~Group) +  # Separate bars by group
-  labs(title = "Houses and Apartments sales per Year by Group",
-       x = "Year",
-       y = "Count",
-       fill = "Type") +
-  theme_minimal()
+
 ```
-The data plot reveals a consistent uptick in annual sales across all groups, with a minor dip in 2017, potentially tied to macroeconomic factors. Notably, groups 1 to 3, characterized by lower population density, show a higher prevalence of house sales. Conversely, in the urban setting of group 4, there is a distinct rise in apartment transactions, aligning with expectations. This concise analysis not only underscores the overall positive sales trend but also sheds light on the dominant property types in different demographic settings, offering valuable insights into the real estate dynamics of each group.
 
+This code creates a graph that clearly shows the monthly visitor trends, with appropriate titles and labels for the axes.
+We also observed an upward trend with seasonality and noted a significant dip during the COVID-19 period.
+We plan to add a dummy variable for this period to avoid biasing the model.
+This approach allows us to isolate the effect of COVID-19 on tourist data and prepare a more robust model that does not consider this event as recurring.
+
+Finally, we accounted for the lockdown period and related restrictions, deciding to treat them as a non-recurring exceptional event in our prediction period.
+This is crucial to ensure that our model predicts future trends without being influenced by past anomalies.
+
+Our approach demonstrates a deep understanding of the challenges associated with time series data analysis and how to effectively handle them to obtain useful and applicable predictions.
+
+```{r}
+# Add dummy variable covid, set to 1 between March 2020 and Feb 2022, 0 everywhere else.
+df$covid <- ifelse(df$date >= ymd("2020-03-01") & df$date <= ymd("2022-02-01"), 1, 0)
+
+```
+
+In this code, a dummy variable named covid is introduced to the dataset to specifically mark the period affected by the COVID-19 pandemic.
+Using the ifelse function, each entry in the date column of the dataframe is checked.
+If a date falls within the range from March 1st, 2020, to February 1st, 2022, the function assigns a 1 to the covid column for that row.
+This value indicates the timeframe of major disruptions due to the pandemic, such as lockdowns and significant travel restrictions.
+For dates outside this specified range, a 0 is assigned, indicating periods considered to be unaffected by COVID-19.
+This differentiation is crucial for any subsequent analysis where the impact of the pandemic might skew results, allowing for adjustments or filtering in modeling efforts.
+The use of the ymd function from the lubridate package ensures that the dates are accurately handled, converting string representations into proper date objects and facilitating precise date comparisons in the analysis.
+This method effectively segments the data, enabling a detailed study of how the pandemic has influenced the observed trends.
 
 ### 3.1.2 Average Price Observations
 
@@ -160,9 +159,12 @@ ggplot(average_prices, aes(x = Annee, y = Avg_Prixm2Moyen)) +
        x = "Year",
        y = "Average Prixm2Moyen")
 ```
-This plot shows the average price per square meter of real estate from 2014 to 2021. The line graph illustrates a significant increase in prices, especially noticeable after 2018. This steep upward trend in the average price indicates a robust growth in the real estate market, potentially reflecting factors such as increased demand, economic growth, or a reduction in supply.  
 
-#### Average Price per group 
+This plot shows the average price per square meter of real estate from 2014 to 2021.
+The line graph illustrates a significant increase in prices, especially noticeable after 2018.
+This steep upward trend in the average price indicates a robust growth in the real estate market, potentially reflecting factors such as increased demand, economic growth, or a reduction in supply.
+
+#### Average Price per group
 
 ```{r, echo = TRUE, message = FALSE}
 #breaks = c(0, 250000, 500000, 800000, 3000000),
@@ -184,18 +186,23 @@ ggplot(new_data, aes(x = Year, y = avg_Prixm2Moyen, color = Group)) +
        color = "Group") +
   theme_minimal()
 ```
-On this graph we can see the price trends for the different groups selected earlier. Group 4 stands out for its high prices, but we can also see that all the groups have been growing since 2014. We can therefore say that the real estate market in France has been growing overall since 2014, except for a slight decline in rural areas in 2016.
 
-#### Histogram price frequency 
+On this graph we can see the price trends for the different groups selected earlier.
+Group 4 stands out for its high prices, but we can also see that all the groups have been growing since 2014.
+We can therefore say that the real estate market in France has been growing overall since 2014, except for a slight decline in rural areas in 2016.
+
+#### Histogram price frequency
 
 ```{r, echo = TRUE}
 #TOTAL average price m2
 mainXpop2 <- read_csv("~/MyDoc/University/Master/Management/DATA/Dataset/mainXpop2.csv")
 hist(mainXpop2$Prixm2Moyen, main = "Average Price/m2", col = "pink", xlab = "Average Price", xlim = c(0, 8000))
 ```
-This histogram illustrating the distribution of the total average price per square meter (**`AveragePrice/m2`**) in the dataset. The visualization offers insights into the variation and frequency of average prices per square meter within the specified range, contributing to the broader exploration of real estate market dynamics in France.
 
-#### Price frequency Curve 
+This histogram illustrating the distribution of the total average price per square meter (**`AveragePrice/m2`**) in the dataset.
+The visualization offers insights into the variation and frequency of average prices per square meter within the specified range, contributing to the broader exploration of real estate market dynamics in France.
+
+#### Price frequency Curve
 
 ```{r, echo = TRUE, fig.width=15, fig.height=9}
 
@@ -212,7 +219,9 @@ ggplot(mainXpop2, aes(x = Prixm2Moyen)) +
   scale_x_continuous(labels = scales::comma_format(scale = 1e-3, suffix = "k")) +
   coord_cartesian(xlim = c(0, 8000))
 ```
-The depicted left-skewed trend and consistent pattern over the years remain evident in the distribution of the average price per square meter (**`Prixm2Moyen`**). The increasing frequency of prices exceeding the average in both total average price and price per square meter suggests a cohesive upward trajectory in real estate values throughout the specified time period, emphasizing a linked relationship between the two metrics.
+
+The depicted left-skewed trend and consistent pattern over the years remain evident in the distribution of the average price per square meter (**`Prixm2Moyen`**).
+The increasing frequency of prices exceeding the average in both total average price and price per square meter suggests a cohesive upward trajectory in real estate values throughout the specified time period, emphasizing a linked relationship between the two metrics.
 
 #### Box and Whisker Plot: Price Distribution by Department
 
@@ -223,11 +232,10 @@ The depicted left-skewed trend and consistent pattern over the years remain evid
 # main = "Price/m2 Distribution by Department")
 ```
 
-![](/Users/victorregly/MyDoc/University/Master/Management/DATA/Groupe-AI/plot1.png){width=800}
-In examining the data by department, noticeable outliers are evident, suggesting instances of exaggeration, likely influenced by unique values in certain departments or even specific communes. At this juncture, opting for the median over the mean proves more insightful due to its robustness in handling extreme values.
+![](/Users/victorregly/MyDoc/University/Master/Management/DATA/Groupe-AI/plot1.png){width="800"} In examining the data by department, noticeable outliers are evident, suggesting instances of exaggeration, likely influenced by unique values in certain departments or even specific communes.
+At this juncture, opting for the median over the mean proves more insightful due to its robustness in handling extreme values.
 
-
-#### Scatter: Price in terms of Surface 
+#### Scatter: Price in terms of Surface
 
 ```{r, echo = TRUE, message = FALSE}
 
@@ -249,8 +257,10 @@ data <- read_delim("~/MyDoc/University/Master/Management/DATA/FINAL_WORK/DSFBA/d
 
 ```
 
-![](/Users/victorregly/MyDoc/University/Master/Management/DATA/FINAL_WORK/DSFBA/report/scatter_surface.png)
-This scatterplot illustrates the relationship between the average surface area (**`SurfaceMoy`**) and the average price per square meter (**`Prixm2Moyen`**). The negative slope of the added regression line (abline) indicates an inverse correlation: as the surface area increases, the average price per square meter tends to decrease. This suggests a potential trend where larger properties have a lower price per square meter compared to smaller ones, providing valuable insights into the pricing dynamics within the dataset. The inclusion of the regression line enhances the visualization by highlighting this negative correlation trend.
+![](/Users/victorregly/MyDoc/University/Master/Management/DATA/FINAL_WORK/DSFBA/report/scatter_surface.png) This scatterplot illustrates the relationship between the average surface area (**`SurfaceMoy`**) and the average price per square meter (**`Prixm2Moyen`**).
+The negative slope of the added regression line (abline) indicates an inverse correlation: as the surface area increases, the average price per square meter tends to decrease.
+This suggests a potential trend where larger properties have a lower price per square meter compared to smaller ones, providing valuable insights into the pricing dynamics within the dataset.
+The inclusion of the regression line enhances the visualization by highlighting this negative correlation trend.
 
 #### Scatter: Price in terms of Surface by Group
 
@@ -281,8 +291,9 @@ This scatterplot illustrates the relationship between the average surface area (
 
 ```
 
-![](/Users/victorregly/MyDoc/University/Master/Management/DATA/FINAL_WORK/DSFBA/report/scatter_by_group.png)
-After segregating the data by population groups (low, average, high, very high), a distinct pattern emerges. It becomes evident that in the most densely populated areas in France, there is a tendency for larger properties to exhibit lower prices per square meter. On the contrary, in rural environments, this trend is less pronounced, and in some instances, it even reverses, indicating a potential inversion of the relationship between property size and price in less densely populated regions.
+![](/Users/victorregly/MyDoc/University/Master/Management/DATA/FINAL_WORK/DSFBA/report/scatter_by_group.png) After segregating the data by population groups (low, average, high, very high), a distinct pattern emerges.
+It becomes evident that in the most densely populated areas in France, there is a tendency for larger properties to exhibit lower prices per square meter.
+On the contrary, in rural environments, this trend is less pronounced, and in some instances, it even reverses, indicating a potential inversion of the relationship between property size and price in less densely populated regions.
 
 #### Yearly Real estate average price in France
 
@@ -330,44 +341,61 @@ for (year in 2014:2021) {
 }
 ```
 
-In this R code, the objective is to conduct a geospatial analysis to visualize and understand the spatial distribution of average real estate prices per square meter across different departments in France from 2014 to 2021. The code involves reading a primary dataset containing relevant real estate information, including the average prices. It then utilizes geographical data in a GeoJSON file outlining the boundaries of French departments. For each year in the range 2014 to 2021, the code filters and aggregates the data, creating thematic maps using **`ggplot2`** and **`sf`**. These maps use color gradients to represent the variation in average prices, with the **`viridis`** package providing a visually appealing color scale. Finally, the maps are saved as PNG images, enabling a comprehensive visual exploration of how real estate prices have evolved across different regions of France over the specified time period.
+In this R code, the objective is to conduct a geospatial analysis to visualize and understand the spatial distribution of average real estate prices per square meter across different departments in France from 2014 to 2021.
+The code involves reading a primary dataset containing relevant real estate information, including the average prices.
+It then utilizes geographical data in a GeoJSON file outlining the boundaries of French departments.
+For each year in the range 2014 to 2021, the code filters and aggregates the data, creating thematic maps using **`ggplot2`** and **`sf`**.
+These maps use color gradients to represent the variation in average prices, with the **`viridis`** package providing a visually appealing color scale.
+Finally, the maps are saved as PNG images, enabling a comprehensive visual exploration of how real estate prices have evolved across different regions of France over the specified time period.
 
-::: {.nav-pills}
-::: {.panel-tabset}
-
+::: nav-pills
+::: panel-tabset
 ## 2014
+
 ![](/Users/victorregly/MyDoc/University/Master/Management/DATA/Dataset/Cartographie/Carte_2014-2021/map_2014.png)
 
 ## 2015
+
 ![](/Users/victorregly/MyDoc/University/Master/Management/DATA/Dataset/Cartographie/Carte_2014-2021/map_2015.png)
 
 ## 2016
+
 ![](/Users/victorregly/MyDoc/University/Master/Management/DATA/Dataset/Cartographie/Carte_2014-2021/map_2016.png)
 
 ## 2017
+
 ![](/Users/victorregly/MyDoc/University/Master/Management/DATA/Dataset/Cartographie/Carte_2014-2021/map_2017.png)
 
 ## 2018
+
 ![](/Users/victorregly/MyDoc/University/Master/Management/DATA/Dataset/Cartographie/Carte_2014-2021/map_2018.png)
 
 ## 2019
+
 ![](/Users/victorregly/MyDoc/University/Master/Management/DATA/Dataset/Cartographie/Carte_2014-2021/map_2019.png)
 
 ## 2020
+
 ![](/Users/victorregly/MyDoc/University/Master/Management/DATA/Dataset/Cartographie/Carte_2014-2021/map_2020.png)
 
 ## 2021
+
 ![](/Users/victorregly/MyDoc/University/Master/Management/DATA/Dataset/Cartographie/Carte_2014-2021/map_2021.png)
 :::
 :::
 
-The script then iterates through the years 2014 to 2021, generating maps for each year and saving them as PNG files. The maps visually represent the average real estate prices per square meter in French departments, with color-coded regions indicating varying price levels. The use of libraries like sf, dplyr, and ggplot2 streamlines spatial data handling and visualization, making the code concise and effective for creating a series of informative maps over multiple years. Additionally, the use of loops and functions enhances code reusability and readability.
+The script then iterates through the years 2014 to 2021, generating maps for each year and saving them as PNG files.
+The maps visually represent the average real estate prices per square meter in French departments, with color-coded regions indicating varying price levels.
+The use of libraries like sf, dplyr, and ggplot2 streamlines spatial data handling and visualization, making the code concise and effective for creating a series of informative maps over multiple years.
+Additionally, the use of loops and functions enhances code reusability and readability.
 
-Observing the real estate market dynamics during the COVID period, a noteworthy pattern emerges, revealing an upward trend in prices along the coastline and in rural areas. This shift implies a growing preference among individuals to move away from urban centers, possibly influenced by changing lifestyle preferences and a heightened appreciation for more spacious and serene environments. The increased demand in these locations could be a reflection of a broader societal trend driven by the pandemic, where individuals seek homes in areas offering tranquility and proximity to nature, contributing to the observed price surge in coastal and rural real estate markets.
+Observing the real estate market dynamics during the COVID period, a noteworthy pattern emerges, revealing an upward trend in prices along the coastline and in rural areas.
+This shift implies a growing preference among individuals to move away from urban centers, possibly influenced by changing lifestyle preferences and a heightened appreciation for more spacious and serene environments.
+The increased demand in these locations could be a reflection of a broader societal trend driven by the pandemic, where individuals seek homes in areas offering tranquility and proximity to nature, contributing to the observed price surge in coastal and rural real estate markets.
 
 ## 3.2 Criminality in France
 
-#### Crime rate over the years 
+#### Crime rate over the years
 
 ```{r, echo = TRUE, message = FALSE, warning = FALSE }
 
@@ -397,9 +425,12 @@ crime_plot <- ggplot(new_data, aes(x = Year, y = criminality)) +
 # Show the plot
 print(crime_plot)
 ```
-In our real estate project in France, we are examining various socio-demographic factors, including the analysis of crime rates in France from 2016 to 2021. Initially, we hypothesized that higher crime rates might be associated with lower-cost housing. However, upon closer inspection, we observed a correlation indicating that in major cities like Paris, the crime rate tends to increase with population density.
 
-#### Crime rate over the years by group 
+In our real estate project in France, we are examining various socio-demographic factors, including the analysis of crime rates in France from 2016 to 2021.
+Initially, we hypothesized that higher crime rates might be associated with lower-cost housing.
+However, upon closer inspection, we observed a correlation indicating that in major cities like Paris, the crime rate tends to increase with population density.
+
+#### Crime rate over the years by group
 
 ```{r, echo = TRUE, message = FALSE, warning = FALSE }
 
@@ -425,12 +456,14 @@ ggplot(new_data, aes(x = Year, y = criminality, color = Group)) +
        color = "Group") +
   theme_minimal()
 ```
-This observation aligns with the logical expectation that more populated areas are likely to have higher chances of criminal activity. Examining the data on a per-thousand inhabitants basis, we found that less densely populated departments experience lower crime rates. As we move forward, we plan to explore the statistical effects by manipulating our real estate data in France, specifically focusing on property prices, to better understand any potential relationships.
 
+This observation aligns with the logical expectation that more populated areas are likely to have higher chances of criminal activity.
+Examining the data on a per-thousand inhabitants basis, we found that less densely populated departments experience lower crime rates.
+As we move forward, we plan to explore the statistical effects by manipulating our real estate data in France, specifically focusing on property prices, to better understand any potential relationships.
 
 ### 3.2.1 Average crime rates
 
-#### Interactive map of Crime avg between (2016 and 2021)  
+#### Interactive map of Crime avg between (2016 and 2021)
 
 ```{r,echo = TRUE, warning = FALSE, message = FALSE}
 library(sf)
@@ -480,9 +513,10 @@ map_avg_txpourmille <- generate_map_avg_txpourmille()
 map_avg_txpourmille
 ```
 
-The interactive map illustrates the average crime rates in France from 2016 to 2020, highlighting departments such as Bouches-du-Rhône, Rhône, Seine-Saint-Denis, Paris, Alpes-Maritimes, and Hérault as high-risk areas. Originally, the data included different types of crimes, but a decision was made to consolidate them into the same category, eliminating the distinction between crime types for the purpose of this analysis.
+The interactive map illustrates the average crime rates in France from 2016 to 2020, highlighting departments such as Bouches-du-Rhône, Rhône, Seine-Saint-Denis, Paris, Alpes-Maritimes, and Hérault as high-risk areas.
+Originally, the data included different types of crimes, but a decision was made to consolidate them into the same category, eliminating the distinction between crime types for the purpose of this analysis.
 
-#### Yearly Average Crime rate per Department 
+#### Yearly Average Crime rate per Department
 
 ```{r, echo = TRUE, warning = FALSE, message = FALSE}
 library(sf)
@@ -527,9 +561,8 @@ for (year in 2016:2020) {
 }
 ```
 
-::: {.nav-pills}
-::: {.panel-tabset}
-
+::: nav-pills
+::: panel-tabset
 ## 2016
 
 ![](/Users/victorregly/MyDoc/University/Master/Management/DATA/Dataset/Cartographie/map_txpourmille_2016.png)
@@ -553,15 +586,20 @@ for (year in 2016:2020) {
 ## 2021
 
 ![](/Users/victorregly/MyDoc/University/Master/Management/DATA/Dataset/Cartographie/map_txpourmille_2021.png)
-
 :::
 :::
 
-The observed pattern suggests a correlation between criminality and the real estate price map, as similar color patterns emerge. This implies a potential association between criminality, population density, and real estate prices.
+The observed pattern suggests a correlation between criminality and the real estate price map, as similar color patterns emerge.
+This implies a potential association between criminality, population density, and real estate prices.
 
 ### 3.2.2 Crime vs. Population
 
-In this part our aim was to delve into the intricate relationship between department size, categorized into four distinct population groups and the corresponding criminality rates over the years 2016 to 2021. As we navigate through the visual representation in the bar plot, a clear pattern emerges -- a positive correlation unfolds, indicating that larger departments tend to experience higher rates of criminality. What captures our attention is the consistent downward trend in crime rates across all population groups leading up to 2020, followed by a sudden and uniform increase. This anomaly prompts us, as a collective, to pose questions about potential external influences, particularly considering the tumultuous events of the COVID-19 pandemic. This 2020 spike in crime rates prompts us to collectively examine the intricacies and understand the unique dynamics at play. Our collaborative exploration seeks meaningful insights into the interplay between population dynamics and criminality, unraveling the complexity of societal trends.
+In this part our aim was to delve into the intricate relationship between department size, categorized into four distinct population groups and the corresponding criminality rates over the years 2016 to 2021.
+As we navigate through the visual representation in the bar plot, a clear pattern emerges -- a positive correlation unfolds, indicating that larger departments tend to experience higher rates of criminality.
+What captures our attention is the consistent downward trend in crime rates across all population groups leading up to 2020, followed by a sudden and uniform increase.
+This anomaly prompts us, as a collective, to pose questions about potential external influences, particularly considering the tumultuous events of the COVID-19 pandemic.
+This 2020 spike in crime rates prompts us to collectively examine the intricacies and understand the unique dynamics at play.
+Our collaborative exploration seeks meaningful insights into the interplay between population dynamics and criminality, unraveling the complexity of societal trends.
 
 #### Criminality rate by year and Population Group
 
@@ -598,15 +636,19 @@ txpourmille_plot <- ggplotly(ggplot_txpourmille, height = 400, width = 700)
 txpourmille_plot
 
 ```
-This plot is an analysis of criminality rates segmented by population groups over several years. The bar chart distinctly displays how crime rates have fluctuated from 2016 to 2021 among different segments of the population. Notably, there is a uniform trend across all groups until a pronounced spike is observed in 2020. This increase may correlate with the socio-economic impacts of the COVID-19 pandemic, which introduced a multitude of stressors on society. The data prompts a need to delve deeper into the correlations between crime rates and external factors such as economic distress, unemployment rates, and societal shifts caused by public health crises. The goal is to draw correlations that can inform policy and prevention strategies, with an eye toward mitigating the factors that led to the 2021 uptick in criminality across all examined population groups.
 
+This plot is an analysis of criminality rates segmented by population groups over several years.
+The bar chart distinctly displays how crime rates have fluctuated from 2016 to 2021 among different segments of the population.
+Notably, there is a uniform trend across all groups until a pronounced spike is observed in 2020.
+This increase may correlate with the socio-economic impacts of the COVID-19 pandemic, which introduced a multitude of stressors on society.
+The data prompts a need to delve deeper into the correlations between crime rates and external factors such as economic distress, unemployment rates, and societal shifts caused by public health crises.
+The goal is to draw correlations that can inform policy and prevention strategies, with an eye toward mitigating the factors that led to the 2021 uptick in criminality across all examined population groups.
 
 ### 3.2.3 Criminality's impact on Real estate
 
 #### Scatter plot of criminality within the years (2016-2021)
 
 ::: panel-tabset
-
 #### 2016
 
 ```{r, echo = TRUE, warning = FALSE, message = FALSE}
@@ -794,9 +836,11 @@ print(scatter_plot)
 ```
 :::
 
-The scatter plot shows the relationship between two variables: average criminality rate per thousands and real estate Average price per square metres. Each dot represents an observation that corresponds to a specific value of criminality and price.
+The scatter plot shows the relationship between two variables: average criminality rate per thousands and real estate Average price per square metres.
+Each dot represents an observation that corresponds to a specific value of criminality and price.
 
-**Positive Correlation Hypothesis:** There is a positive correlation between the price  and criminality rates. As the price increases, so does the criminality rate.
+**Positive Correlation Hypothesis:** There is a positive correlation between the price and criminality rates.
+As the price increases, so does the criminality rate.
 
 **Economic Activity Hypothesis:** Higher prices might indicate areas with more economic activity, which could correlate with higher crime rates simply due to more opportunities for crime.
 
@@ -827,12 +871,15 @@ p <- ggplotly(ggp, height = 400, width = 700)
 p
 
 ```
-This scatter plot show a relationship between the average square meter price of property on the x-axis, crime rates on the y-axis and also Population density with the colour grade. Each point on the scatter plot represents a particular department in a special year.
 
-The group of points with an average square meter price over 1500 euros clearly shows that these are densely populated regions, but also that crime is generally higher. On the other hand, when the price is less than 1500 euros, the population is much lower and so is the crime rate.
+This scatter plot show a relationship between the average square meter price of property on the x-axis, crime rates on the y-axis and also Population density with the colour grade.
+Each point on the scatter plot represents a particular department in a special year.
+
+The group of points with an average square meter price over 1500 euros clearly shows that these are densely populated regions, but also that crime is generally higher.
+On the other hand, when the price is less than 1500 euros, the population is much lower and so is the crime rate.
 We can hypothesize that the price per square meter is positively correlated with population density and crime rates.
 
-#### Criminiality heatmap  
+#### Criminiality heatmap
 
 ```{r, echo = TRUE, message = FALSE}
 
@@ -859,9 +906,11 @@ heatmap_plot <- ggplotly(gg_heatmap, height = 400, width = 700)
 # Display the plot
 heatmap_plot
 ```
+
 The groups are those selected using the different quantiles above.
 
-This heat map shows that crime is increasing as a function of population density in the groups. We can also clearly see a criminality drop during Covid-19 due to population lock out in France.
+This heat map shows that crime is increasing as a function of population density in the groups.
+We can also clearly see a criminality drop during Covid-19 due to population lock out in France.
 The groups are those selected using the different quantiles above.
 
 ## 3.3 Population
@@ -946,19 +995,17 @@ generate_map <- function(year, variable) {
 
 ```
 
-#### Yearly average population density 
+#### Yearly average population density
 
-::: {.nav-pills}
-::: {.panel-tabset}
-
+::: nav-pills
+::: panel-tabset
 ## 2014
 
 ![](/Users/victorregly/MyDoc/University/Master/Management/DATA/FINAL_WORK/DSFBA/report/map_POP_2014.png)
 
 ## 2015
 
-![](/Users/victorregly/MyDoc/University/Master/Management/DATA/FINAL_WORK/DSFBA/report/map_POP_2015.png)
-## 2016
+![](/Users/victorregly/MyDoc/University/Master/Management/DATA/FINAL_WORK/DSFBA/report/map_POP_2015.png) \## 2016
 
 ![](/Users/victorregly/MyDoc/University/Master/Management/DATA/FINAL_WORK/DSFBA/report/map_POP_2016.png)
 
@@ -985,7 +1032,6 @@ generate_map <- function(year, variable) {
 :::
 
 Once more, there's a resemblance in the color mapping to real estate prices, prompting consideration of a potential correlation between the two.
-
 
 ### 3.3.2 Real estate in terms of Population
 
@@ -1022,11 +1068,15 @@ leprix <- ggplotly(ggplot_txpourmille, height = 400, width = 700)
 leprix
 
 ```
-This plot analyzes Price per Square Meter rates across population groups from 2016 to 2021. The bar chart reveals fluctuations, with a notable spike in 2020, potentially linked to the socio-economic impacts of the COVID-19 pandemic. Further exploration into correlations with factors like economic distress and unemployment rates is warranted. The aim is to inform strategies addressing the observed 2020 uptick in prices per square meter across all population groups.
 
-## 3.4 Unemployment rate 
+This plot analyzes Price per Square Meter rates across population groups from 2016 to 2021.
+The bar chart reveals fluctuations, with a notable spike in 2020, potentially linked to the socio-economic impacts of the COVID-19 pandemic.
+Further exploration into correlations with factors like economic distress and unemployment rates is warranted.
+The aim is to inform strategies addressing the observed 2020 uptick in prices per square meter across all population groups.
 
-#### Unemployment rate in France  
+## 3.4 Unemployment rate
+
+#### Unemployment rate in France
 
 ```{r, echo = TRUE , message = FALSE, warning = FALSE}
 data <- read_delim("~/MyDoc/University/Master/Management/DATA/FINAL_WORK/DSFBA/dataset_vf/PrixPopCrimeYearChomIntInf_vf3.csv", delim = ";", escape_double = FALSE, trim_ws = TRUE)
@@ -1054,7 +1104,6 @@ print(chomage)
 
 The overall unemployment trend shows a decline, but a spike is observed after 2020, indicating a subsequent increase.
 
-
 #### Unemployment rate in France by group
 
 ```{r, echo = TRUE, warning = FALSE, message = FALSE}
@@ -1077,9 +1126,15 @@ ggplot(new_data, aes(x = Year, y = UnemploymentRate, color = Group)) +
        color = "Group") +
   theme_minimal()
 ```
-Upon closer examination by group, a nuanced picture of unemployment trends emerges. Initially, there is an overall decline in unemployment rates, suggesting positive economic conditions. However, post-2020, a noticeable spike in unemployment is evident, signifying a shift in the trajectory. This increase, observed across various population groups, prompts further exploration into the specific factors contributing to the rise in unemployment. Analyzing these group-specific trends is essential for understanding the diverse impacts of economic fluctuations and tailoring targeted interventions to mitigate the challenges faced by distinct segments of the population.
 
-#### Boxplot Unemployment by group 
+Upon closer examination by group, a nuanced picture of unemployment trends emerges.
+Initially, there is an overall decline in unemployment rates, suggesting positive economic conditions.
+However, post-2020, a noticeable spike in unemployment is evident, signifying a shift in the trajectory.
+This increase, observed across various population groups, prompts further exploration into the specific factors contributing to the rise in unemployment.
+Analyzing these group-specific trends is essential for understanding the diverse impacts of economic fluctuations and tailoring targeted interventions to mitigate the challenges faced by distinct segments of the population.
+
+#### Boxplot Unemployment by group
+
 ```{r, echo = TRUE, message = FALSE}
 merged_data <- read_delim("~/MyDoc/University/Master/Management/DATA/FINAL_WORK/DSFBA/dataset_vf/PrixPopCrimeYearChomIntInf_vf3.csv", delim = ";", escape_double = FALSE, trim_ws = TRUE)
 
@@ -1109,11 +1164,15 @@ txpourmille_plot <- ggplotly(ggplot_chomage, height = 400, width = 700) %>%
 txpourmille_plot
 ```
 
-We can see a bar chart of the evolution of the unemployment rate by year and by department group from 2014 to 2021. We can see that unemployment rates vary not only over the years, but also between population groups, possibly classified by departmental population size.
+We can see a bar chart of the evolution of the unemployment rate by year and by department group from 2014 to 2021.
+We can see that unemployment rates vary not only over the years, but also between population groups, possibly classified by departmental population size.
 
-In 2014, unemployment rates for all four groups are relatively high, with a slight decrease for the first group and an increase for the fourth in 2015. From 2016 to 2017, there is a general downward trend in unemployment rates for all groups. However, in 2018, this trend reverses slightly for the fourth group. From 2019 to 2021, all groups appear to be experiencing a decrease in the unemployment rate.
+In 2014, unemployment rates for all four groups are relatively high, with a slight decrease for the first group and an increase for the fourth in 2015.
+From 2016 to 2017, there is a general downward trend in unemployment rates for all groups.
+However, in 2018, this trend reverses slightly for the fourth group.
+From 2019 to 2021, all groups appear to be experiencing a decrease in the unemployment rate.
 
-#### Unemployment average in France by department 
+#### Unemployment average in France by department
 
 ```{r, echo= TRUE}
 
@@ -1176,10 +1235,8 @@ In 2014, unemployment rates for all four groups are relatively high, with a slig
 
 ```
 
-
-::: {.nav-pills}
-::: {.panel-tabset}
-
+::: nav-pills
+::: panel-tabset
 ## 2014
 
 ![](/Users/victorregly/MyDoc/University/Master/Management/DATA/Dataset/Cartographie/map_2014.png)
@@ -1211,13 +1268,10 @@ In 2014, unemployment rates for all four groups are relatively high, with a slig
 ## 2021
 
 ![](/Users/victorregly/MyDoc/University/Master/Management/DATA/Dataset/Cartographie/map_2021.png)
-
 :::
 :::
 
-
-
-#### Scatter plot of the price in terms of Unemployment 
+#### Scatter plot of the price in terms of Unemployment
 
 ```{r}
 # Read the data
@@ -1242,11 +1296,14 @@ p <- ggplotly(ggp, height = 400, width = 700)
 # Customize layout if needed
 p
 ```
-The scatter plot indicates that departments with lower real estate costs per square meter tend to have smaller populations and higher rates of unemployment. This trend may reflect economic vitality in more densely populated areas, likely due to a variety of employment opportunities and more robust economic activities. In contrast, areas with less population may offer fewer job opportunities, contributing to higher unemployment rates and lower housing costs due to lower demand.
+
+The scatter plot indicates that departments with lower real estate costs per square meter tend to have smaller populations and higher rates of unemployment.
+This trend may reflect economic vitality in more densely populated areas, likely due to a variety of employment opportunities and more robust economic activities.
+In contrast, areas with less population may offer fewer job opportunities, contributing to higher unemployment rates and lower housing costs due to lower demand.
 
 The visualization of data thus leads us to a plausible hypothesis: individuals may be inclined to move towards more populous regions when seeking work, driven by the promise of a more favorable job market.
 
-#### Unemployment heatmap 
+#### Unemployment heatmap
 
 ```{r, echo = TRUE, message = FALSE, warning = FALSE}
 # Read data
@@ -1271,9 +1328,14 @@ heatmap_plot <- ggplotly(gg_heatmap, height = 400, width = 700)
 # Display the plot
 heatmap_plot
 ```
-The heat map shows the evolution of unemployment rates for four groups of départements ranked by population from 2016 to 2021 The shades of color vary from light to dark indicating unemployment rates of 8 to 10%. The darker the color, the higher the unemployment rate. Groups of departments with larger populations could be those with darker shades suggesting higher unemployment rates. This could indicate economic challenges specific to more populated areas, or labor market dynamics that vary according to population density. The general trend or significant changes over the years could reflect the impact of major economic events or employment policies on different types of departments.
 
-## 3.5 Inflation, Interest Rate & PIB 
+The heat map shows the evolution of unemployment rates for four groups of départements ranked by population from 2016 to 2021 The shades of color vary from light to dark indicating unemployment rates of 8 to 10%.
+The darker the color, the higher the unemployment rate.
+Groups of departments with larger populations could be those with darker shades suggesting higher unemployment rates.
+This could indicate economic challenges specific to more populated areas, or labor market dynamics that vary according to population density.
+The general trend or significant changes over the years could reflect the impact of major economic events or employment policies on different types of departments.
+
+## 3.5 Inflation, Interest Rate & PIB
 
 ```{r, echo = TRUE, message = FALSE, warning = FALSE, out.width='100%'}
 library(ggplot2)
@@ -1313,11 +1375,13 @@ interet <- ggplot(new_data, aes(x = Year)) +
 # Show the plot
 print(interet)
 ```
-The graph  show how these macroeconomic indicators have moved over the years, which can be important for analyzing economic health, setting monetary policy, and understanding market trends. We can observe here a falling trend of every macroeconomic factors during covid-19 pandemic and a raise of variables.
 
-## 3.7 Multipanel variables  
+The graph show how these macroeconomic indicators have moved over the years, which can be important for analyzing economic health, setting monetary policy, and understanding market trends.
+We can observe here a falling trend of every macroeconomic factors during covid-19 pandemic and a raise of variables.
 
-#### Panel 
+## 3.7 Multipanel variables
+
+#### Panel
 
 ```{r, echo = TRUE, message = FALSE, warning = FALSE, out.width='80%'}
 data <- read.csv("~/MyDoc/University/Master/Management/DATA/FINAL_WORK/DSFBA/dataset_vf/PrixPopCrimeYearChomIntInf_vf4.csv")
@@ -1350,9 +1414,13 @@ facet_plot <- ggplot(new_data_long, aes(x = Year, y = value, color = variable)) 
 # Show the plot
 print(facet_plot)
 ```
-Here we have trends in selected variables over the period 2014 to 2021. We can see that GDP, population, inflation, property prices, sales and area sold are all on the rise. On the other hand, interest rates, crime and unemployment are falling. We can hypothesize that there is a potential negative correlation between these variables, which we will study in greater depth during the analysis.
 
-#### Correlation map with all the variables 
+Here we have trends in selected variables over the period 2014 to 2021.
+We can see that GDP, population, inflation, property prices, sales and area sold are all on the rise.
+On the other hand, interest rates, crime and unemployment are falling.
+We can hypothesize that there is a potential negative correlation between these variables, which we will study in greater depth during the analysis.
+
+#### Correlation map with all the variables
 
 ```{r, echo = TRUE, warning = FALSE, message = FALSE, out.width='100%'}
 data <- read.csv("~/MyDoc/University/Master/Management/DATA/FINAL_WORK/DSFBA/dataset_vf/PrixPopCrimeYearChomIntInf_vf4.csv")
@@ -1375,5 +1443,8 @@ cor_matrix <- cor(cor_vars)
 # Plot the correlation matrix using corrplot
 corrplot(cor_matrix, method = "color", type = "upper", tl.cex = 0.8, tl.col = "black")
 ```
-By creating a correlation graph of the selected variables, we can get a first idea of the potential correlations we may have. For exemple,Red collor show a strong negative correlation, white is no correlation and dark blue for a strong positive correlation. This graph should be read with caution, as we don't know whether the relationships are significant.
+
+By creating a correlation graph of the selected variables, we can get a first idea of the potential correlations we may have.
+For exemple,Red collor show a strong negative correlation, white is no correlation and dark blue for a strong positive correlation.
+This graph should be read with caution, as we don't know whether the relationships are significant.
 We will study all these correlations in greater depth in the analysis with more advanced statistical methods.
