@@ -1,0 +1,35 @@
+---
+title: "Forecasting Project 1"
+author:
+  - "SCHICK Valentin, Victor HOGAN"
+  - "Reisa"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+cours: ""
+format:
+  html:
+    
+    toc: true
+    toc_depth: true
+    toc_float: true
+    toc-location: left
+    
+    grid:
+      sidebar-width: 250px
+      body-width: 900px
+      margin-width: 10px
+      
+    code-fold: true
+    code-tools: true
+    
+    embed-resources: true
+    number_sections: true
+---
+hjhjhjh
+```{r setup}
+knitr::opts_chunk$set(message = FALSE, warning = FALSE)
+```
+
+
+
+```{r child = c('declaration1.qmd', 'intro1.qmd', 'data1.qmd', 'eda1.qmd')}
+```
