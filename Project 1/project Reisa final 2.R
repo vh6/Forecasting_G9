@@ -241,7 +241,12 @@ GDP.Vaud <- data.frame(
 print(GDP.Vaud)
 
 #Merging the datasets
-str(df_nocovid$Date)
+str(df_nocovid$date)
+<<<<<<< Updated upstream
+# Rename date column to Date
+df_nocovid$Date <- df_nocovid$date
+=======
+>>>>>>> Stashed changes
 str(payerne_weather$Date)
 str(GDP.Vaud$Date)
 df_weather_merged <- df_nocovid |> 
