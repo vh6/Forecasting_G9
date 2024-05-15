@@ -24,12 +24,12 @@ format:
     embed-resources: true
     number_sections: true
 ---
-hjhjhjh
+
 ```{r setup}
 knitr::opts_chunk$set(message = FALSE, warning = FALSE)
 ```
 
 
 
-```{r child = c('declaration1.qmd', 'intro1.qmd', 'data1.qmd', 'eda1.qmd')}
+```{r child = c()}
 ```
