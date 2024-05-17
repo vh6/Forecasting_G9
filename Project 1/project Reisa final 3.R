@@ -14,7 +14,7 @@ library(patchwork)
 # Load data
 df <- read.csv("Dataset_tourism.csv", stringsAsFactors = FALSE)
 # Translate Monat column to English
-german_months <- c("Januar", "Februar", "März", "April", "Mai", "Juni", 
+german_months <- c("Januar", "Februar", "M\xe4rz", "April", "Mai", "Juni", 
                    "Juli", "August", "September", "Oktober", "November", "Dezember")
 english_months <- month.name
 

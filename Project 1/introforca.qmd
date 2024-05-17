@@ -33,3 +33,47 @@ The dataset comprises monthly data on hotel sector arrivals, categorized by cant
 # Exploratory Data Analysis (EDA)
 
 
+```{r}
+# Load packages
+library(tidyverse)
+library(lubridate)
+library(fpp3)
+library(stats)
+library(dplyr)
+library(ggplot2)
+library(fable)
+library(tsibble)
+library(fabletools)
+library(patchwork)
+
+
+# Load data
+df <- read.csv("Dataset_tourism.csv", stringsAsFactors = FALSE)
+# Translate Monat column to English
+german_months <- c("Januar", "Februar", "M\xe4rz", "April", "Mai", "Juni", 
+                   "Juli", "August", "September", "Oktober", "November", "Dezember")
+english_months <- month.name
+
+# Replace German month names with English month names
+df$Monat <- factor(df$Monat, levels = german_months, labels = english_months)
+
+# Check if any month translations have failed leading to NAs
+if(any(is.na(df$Monat))) {
+  warning("NA values found in month translation. Check 'Monat' levels and labels.")
+}
+df$date <- ymd(paste(df$Jahr, df$Monat, "01", sep = "-"))
+if(any(is.na(df$date))) {
+  warning("NA values found in 'date' creation. Check 'Jahr', 'Monat' concatenation.")
+}
+
+# Count NAs
+sum(is.na(df$Jahr)) # 0 NAs
+sum(is.na(df$Monat)) # 0 NAs
+sum(is.na(df$date)) # 0 NAs
+sum(is.na(df$value)) # 51395 NAs
+sum(is.na(df$Kanton)) # 0 NAs
+sum(is.na(df$Herkunftsland)) # 0 NAs
+
+```
+
+
