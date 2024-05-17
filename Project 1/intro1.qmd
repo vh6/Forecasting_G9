@@ -1,0 +1,15 @@
+# 1.Introduction
+
+```{r, echo = FALSE, message = FALSE}
+(here::here("scripts/setup.R"))
+```
+
+
+In the data analysis work of the master project, we will analyze the collections of the
+Museum of Modern Art. We are structuring our analysis into the following to answer the research question: "Can we predict the category of an artwork based on the identity of the artist, the features like medium and dimension?
+To demonstrate the mentioned problem above, we are going to describe in great detail the data we got from an open database of the Museum of Modern Art, which has over 130,000 works of art located at data.world/moma/collection. This first part will be to give the necessary context in order to understand the information that we will be exploring.
+Finally, our reflection will focus on an analysis of characteristics which could possibly influence the classification of artworks by using machine learning methods to quantify the relationships between the attributes of the works and their categories.
+Finally, from such an analysis, we shall try to look at the implications and a possible solution in line with any possible improvements in the method of cataloging used at MoMA. We will also draw implications of our findings on management and presentation of the collections of art.
+This will structure us through the methodical investigation and will be enough to be able to provide concrete conclusions about the intersection of art and technology of data analysis.
+
+

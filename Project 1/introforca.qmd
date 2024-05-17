@@ -1,0 +1,35 @@
+# 1.Introduction
+
+```{r, echo = FALSE, message = FALSE}
+(here::here("scripts/setup.R"))
+```
+
+Tourism is a significant sector for Switzerland's economy, contributing greatly to its GDP and employment. Accurate forecasting of tourist arrivals is essential for effective planning and decision-making in the tourism industry. This project aims to predict the total number of visitors to Vaud from October 2023 to December 2024 and specifically the number of visitors from the Philippines to Ticino during the same period. Utilizing historical data from 2005 to September 2023, we apply various forecasting techniques, integrating exogenous variables such as GDP and weather conditions to enhance the accuracy of our predictions.
+
+## Objective
+
+The primary objectives of this project are:
+
+-   To forecast the total number of visitors to the canton of Vaud from October 2023 to December 2024.
+
+-   To forecast the number of visitors from the Philippines to the canton of Ticino for the same period. We aim to compare different time series models and include exogenous variables to improve forecast accuracy.
+
+# Data cleaning/wrangling
+
+The dataset comprises monthly data on hotel sector arrivals, categorized by canton and visitors' country of residence. The following steps were taken to clean and prepare the data for analysis:
+
+-   **Translation**: The 'Monat' column, originally in German, was translated to English to facilitate better understanding.
+
+-   **Date Formatting**: A new 'date' column was created by combining the 'Jahr' and 'Monat' columns.
+
+-   **Missing Values**: We identified and addressed missing values, specifically focusing on the 'value' column which had 51,395 missing entries.
+
+-   **Outlier Detection**: The data was visually inspected for outliers, particularly the significant drop during the COVID-19 pandemic.
+
+-   **Dummy Variables**: A dummy variable for the COVID period was created to handle the unique impact of the pandemic on tourism.
+
+-   **Merging Exogenous Data**: Weather data (temperature and precipitation) for Payerne and Lugano, and GDP data for Vaud and Ticino were merged with the main dataset to include additional predictive variables.
+
+# Exploratory Data Analysis (EDA)
+
+
