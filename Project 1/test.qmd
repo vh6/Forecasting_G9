@@ -1,0 +1,138 @@
+---
+editor: 
+  markdown: 
+    wrap: sentence
+---
+
+# Exploratory Data Analysis (EDA)
+
+```{r, echo = FALSE, message = FALSE}
+(here::here("scripts/setup.R"))
+```
+
+#### Loading Packages
+
+This block of code loads several essential packages that are used throughout the data analysis.
+Each package serves a specific function, from data manipulation and visualization to time series forecasting.
+
+```{r}
+# Load packages
+library(tidyverse)
+library(lubridate)
+library(fpp3)
+library(stats)
+library(dplyr)
+library(ggplot2)
+library(fable)
+library(tsibble)
+library(fabletools)
+library(patchwork)
+
+```
+
+This block of code loads several essential packages that are used throughout the data analysis.
+Each package serves a specific function, from data manipulation and visualization to time series forecasting.
+
+#### Loading and Preparing Data
+
+```{r, echo = TRUE, message = FALSE}
+# Load data
+df <- read.csv("Dataset_tourism.csv", stringsAsFactors = FALSE)
+
+# Translate Monat column to English
+german_months <- c("Januar", "Februar", "März", "April", "Mai", "Juni", 
+                   "Juli", "August", "September", "Oktober", "November", "Dezember")
+english_months <- month.name
+
+# Replace German month names with English month names
+df$Monat <- factor(df$Monat, levels = german_months, labels = english_months)
+```
+
+Here, the code loads a dataset from a CSV file.
+It also handles the conversion of German month names into English, ensuring the data is accessible and ready for analysis.
+This step is crucial for preparing the dataset for time-series analysis, as date formatting must be consistent.
+
+#### Counting Missing Values
+
+```{r,echo = TRUE}
+
+# Count NAs
+sum(is.na(df$Jahr)) # 0 NAs
+sum(is.na(df$Monat)) # 0 NAs
+sum(is.na(df$date)) # 0 NAs
+sum(is.na(df$value)) # 51395 NAs
+sum(is.na(df$Kanton)) # 0 NAs
+sum(is.na(df$Herkunftsland)) # 0 NAs
+
+```
+
+This segment of code counts and reports the number of missing (NA) values in various columns of the dataset.
+This is an important step to identify and address any data quality issues before proceeding with further analysis.
+
+#### Forecasting Total Visitors to Vaud
+
+This section outlines the methodology for predicting the number of visitors to Vaud, focusing on handling the dataset to ensure accurate and unbiased forecasting.
+
+#### Data Preparation
+
+```{r, echo = TRUE, warning = FALSE}
+
+# Subset dataframe to remove nationalities and cantons, and keep totals.
+df <- df[df$Herkunftsland == "Herkunftsland - Total" & df$Kanton == "Vaud", ]
+
+```
+
+The initial step involves subsetting the data to focus specifically on the overall visitor statistics for the canton of Vaud, removing entries related to specific nationalities and other cantons.
+This ensures that the analysis is targeted and relevant to the specific geographic area of interest.
+
+#### Time Series Data Transformation
+
+```{r, echo = TRUE}
+# Transform df to tsibble
+df <- tsibble(df, index = date)
+```
+
+The data is then transformed into a tsibble, a time series data frame that facilitates handling and modeling time series in a tidyverse-compatible way.
+This format is particularly useful for the subsequent steps in time series analysis and forecasting.
+
+#### Visualization of Visitor Trends
+
+```{r, echo = TRUE, message = FALSE, out.width='100%'}
+# Plot visitors
+df |> autoplot(value) +
+  ggtitle("Monthly visitors to Vaud") +
+  ylab("Visitors") +
+  xlab("Months")
+
+# We see an upwards trend with seasonality, and a little bit of noise. We also see a strong dip in the amount of visitors during COVID, which will bias our model.
+# We will add a dummy variable for all observations during covid, so we may remove them when creating a model in order to not bias our model.
+# We consider COVID to be a black swan, and a unique event, and we will assume that it will not happen again during the period that we are predicting (Oct 23 - Dec 24).
+# Lockdown started in March 2020, and all measures except masks were lifted indefinitely in February 2022.
+
+
+```
+
+This code creates a graph that clearly shows the monthly visitor trends, with appropriate titles and labels for the axes.
+We also observed an upward trend with seasonality and noted a significant dip during the COVID-19 period.
+We plan to add a dummy variable for this period to avoid biasing the model.
+This approach allows us to isolate the effect of COVID-19 on tourist data and prepare a more robust model that does not consider this event as recurring.
+
+Finally, we accounted for the lockdown period and related restrictions, deciding to treat them as a non-recurring exceptional event in our prediction period.
+This is crucial to ensure that our model predicts future trends without being influenced by past anomalies.
+
+Our approach demonstrates a deep understanding of the challenges associated with time series data analysis and how to effectively handle them to obtain useful and applicable predictions.
+
+```{r}
+# Add dummy variable covid, set to 1 between March 2020 and Feb 2022, 0 everywhere else.
+df$covid <- ifelse(df$date >= ymd("2020-03-01") & df$date <= ymd("2022-02-01"), 1, 0)
+
+```
+
+In this code, a dummy variable named covid is introduced to the dataset to specifically mark the period affected by the COVID-19 pandemic.
+Using the ifelse function, each entry in the date column of the dataframe is checked.
+If a date falls within the range from March 1st, 2020, to February 1st, 2022, the function assigns a 1 to the covid column for that row.
+This value indicates the timeframe of major disruptions due to the pandemic, such as lockdowns and significant travel restrictions.
+For dates outside this specified range, a 0 is assigned, indicating periods considered to be unaffected by COVID-19.
+This differentiation is crucial for any subsequent analysis where the impact of the pandemic might skew results, allowing for adjustments or filtering in modeling efforts.
+The use of the ymd function from the lubridate package ensures that the dates are accurately handled, converting string representations into proper date objects and facilitating precise date comparisons in the analysis.
+This method effectively segments the data, enabling a detailed study of how the pandemic has influenced the observed trends.

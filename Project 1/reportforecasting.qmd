@@ -31,5 +31,5 @@ knitr::opts_chunk$set(message = FALSE, warning = FALSE)
 
 
 
-```{r child = c()}
+```{r child = c('test.qmd')}
 ```
