@@ -32,7 +32,6 @@ The dataset comprises monthly data on hotel sector arrivals, categorized by cant
 
 # Exploratory Data Analysis (EDA)
 
-
 ```{r}
 # Load packages
 library(tidyverse)
@@ -75,5 +74,70 @@ sum(is.na(df$Kanton)) # 0 NAs
 sum(is.na(df$Herkunftsland)) # 0 NAs
 
 ```
+
+##### 1. Predict total visitors between Oct 2023 and Dec 2024
+
+-   **Time Series Plots**: Visualized the monthly visitors to Vaud and Filipino visitors to Ticino, highlighting trends, seasonality, and the impact of COVID-19.
+
+```{r}
+### 1. Predict total visitors between Oct 2023 and Dec 2024
+
+# Subset dataframe to remove nationalities and cantons, and keep totals.
+df <- df[df$Herkunftsland == "Herkunftsland - Total" & df$Kanton == "Vaud", ]
+
+# Transform df to tsibble
+df <- tsibble(df, index = date)
+
+# Plot visitors
+df |> autoplot(value) +
+  ggtitle("Monthly visitors to Vaud") +
+  ylab("Visitors") +
+  xlab("Months")
+
+# We see a upwards trend with seasonality, and a little bit of noise. We also see a strong dip in the amount of visitors during COVID, which will bias our model.
+# We will add a dummy variable for all observations during covid, so we may remove them when creating a model in order to not bias our model.
+# We consider COVID to be a black swan, and a unique event, and we will assume that it will not happen again during the period that we are predicting (Oct 23 - Dec 24).
+# Lockdown started in March 2020, and all measures except masks were lifted indefinitely in February 2022.
+
+```
+
+The time series plot of monthly visitors to Vaud from 2005 to 2023 reveals several key insights. There is a clear **upward trend** in visitor numbers, indicating growing tourism. The plot shows **strong seasonal patterns**, with regular peaks and troughs each year, reflecting typical tourist activity periods. A significant **drop in visitors during the COVID-19 pandemic** (2020-2022) is evident, illustrating the impact of global travel restrictions. Post-pandemic, visitor numbers **recover**, though with some variability. This highlights the need to account for trends, seasonality, and anomalies in our forecasting models.
+
+```{r}
+# Add dummy variable covid, set to 1 between March 2020 and Feb 2022, 0 everywhere else.
+df$covid <- ifelse(df$date >= ymd("2020-03-01") & df$date <= ymd("2022-02-01"), 1, 0)
+
+# Create no covid tsibble
+df_nocovid <- df
+df_nocovid$value[df_nocovid$covid == 1] <- NA
+
+df_nocovid |> autoplot(value) +
+  ggtitle("Monthly visitors to Vaud") +
+  ylab("Visitors") +
+  xlab("Months")
+
+```
+This code adds a COVID indicator variable (set to 1 between March 2020 and February 2022, 0 otherwise) and replaces visitor values with NA for this period in a copy of the dataframe. Then, it generates a plot of monthly visitors to Vaud, excluding the COVID period data.
+
+
+```{r}
+# Since the COVID period is exactly 2 years, we can try to "stick" the before and after values together, so we have a time series without gaps, and this won't affect seasonality.
+
+# Drop covid rows
+df_nocovid <- df_nocovid[df_nocovid$covid != 1, ]
+
+# Add 2 years from data before covid
+df_nocovid$date[df_nocovid$date < ymd("2022-03-01")] <- df_nocovid$date[df_nocovid$date < ymd("2022-03-01")] + years(2)
+
+
+df_nocovid <- tsibble(df_nocovid, index = date)
+
+df_nocovid |> autoplot(value) +
+  ggtitle("Monthly visitors to Vaud") +
+  ylab("Visitors") +
+  xlab("Months")
+```
+
+The updated time series plot of monthly visitors to Vaud, with the COVID-19 period removed, shows a more consistent upward trend in visitor numbers from 2005 to 2023. The seasonal patterns remain prominent, with regular peaks and troughs each year reflecting typical tourist activity. By excluding the COVID-19 anomaly, the plot provides a clearer view of the underlying trends and seasonality, allowing for more accurate forecasting and analysis of long-term tourism patterns in Vaud.
 
 
