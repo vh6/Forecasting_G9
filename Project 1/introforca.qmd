@@ -4,7 +4,7 @@
 (here::here("scripts/setup.R"))
 ```
 
-Tourism is a significant sector for Switzerland's economy, contributing greatly to its GDP and employment. Accurate forecasting of tourist arrivals is essential for effective planning and decision-making in the tourism industry. This project aims to predict the total number of visitors to Vaud from October 2023 to December 2024 and specifically the number of visitors from the Philippines to Ticino during the same period. Utilizing historical data from 2005 to September 2023, we apply various forecasting techniques, integrating exogenous variables such as GDP and weather conditions to enhance the accuracy of our predictions.
+Tourism is a significant sector for Switzerland's economy, contributing greatly to its GDP and employment. Accurate forecasting of tourist arrivals is essential for effective planning and decision-making in the tourism industry. This project aims to predict the total number of visitors to Vaud from October 2023 to December 2024 as well as the number of visitors from the Philippines to Ticino during the same period. Utilizing historical data from 2005 to September 2023, we apply various forecasting techniques, integrating exogenous variables such as GDP and weather conditions to enhance the accuracy of our predictions.
 
 ## Objective
 
@@ -12,7 +12,9 @@ The primary objectives of this project are:
 
 -   To forecast the total number of visitors to the canton of Vaud from October 2023 to December 2024.
 
--   To forecast the number of visitors from the Philippines to the canton of Ticino for the same period. We aim to compare different time series models and include exogenous variables to improve forecast accuracy.
+-   To forecast the number of visitors from the Philippines to the canton of Ticino for the same period. 
+
+We aim to compare different time series models and include exogenous variables to improve forecast accuracy.
 
 # Data cleaning/wrangling
 
