@@ -1,0 +1,45 @@
+### **Limitations and Discussion**
+
+#### **Objective Analysis of Results**
+
+The research question addressed in this research study was: "Can we forecast the number of visitors to Vaud and Ticino on the basis of features like GDP, temperature, and precipitation?" We used historical data covering the period 2005 to September 2023 and employed various forecasting techniques, appraising the estimated impacts of exogenous variables—such as GDP and weather conditions—on the number of visitors in order to make a better forecast.
+
+#### **Potential Improvements**
+
+1.  **Complexity**
+
+    -   Why this becomes a bit more challenging and problematic is that it contains a very large initial dataset with many categorical variables in it. Mention: This is potential for making sure data consistency and quality, such that reliable predictions can be made.
+
+2.  **Model Limit**
+
+    -   Although our model has been performing satisfactorily until now, it is important to notice its limitations. The model's performance is dependent on data quality and data completeness. There may be a bias in the dataset, which can affect the predictions.
+
+3.  **Practical Application**
+
+    -   Realization of the model in the real world requires working with the museum staff to embed the model with their work systems. Continuous user feedback might be useful to polish the model and settle some pragmatic challenges.
+
+4.  **Clustering Limitations**
+
+    -   The clustering-based approach was not found to produce much due to the problems already discussed above. The importance of the selection of proper methods and features in unsupervised learning problems is, therefore, exhibited.
+
+#### **Conclusion**
+
+A conclusion is drawn: our model opens new advanced opportunities for forecasting tourist arrivals into Vaud and Ticino, as well as predictive performance. Indeed, the model, after all steps towards quality data, strong validation, and continuous improvement, ultimately suggested by the model, converts it into one valuable asset for the tourism planning operation. With further research and development, its precision and reliability can meet the stringency of very high standards for tourist arrival forecasting.
+
+**Example of Used Models:**
+
+**Automatic ARIMA Models**
+
+For Vaud visitors: The ARIMA(0,0,3)(0,1,2)\[12\] with drift model is very accurate with a very.
+
+-   ARIMA(0,1,2) with drift for visitors in Ticino is a more basic model. There appears to be no significant seasonality in the residuals and perhaps a little bit of an upwards trend.
+
+**Introduction of Exogenous Variables**
+
+-   All exogenous variables—gross domestic product, temperature, and precipitation—have positive links with the dependent variables, with that concerning temperature being especially strong. The only, but very important, difference is that the AIC and BIC values are substantially higher in comparison with the automatic ARIMA models without exogenous variables, stating that the improvement in fit is not compensated by the enhanced complexity.
+
+**Validation and Prediction**
+
+-   We chose the first automated ARIMA models since they were simple and had better AIC and BIC indicators after modeling forecasts for Vaud and Ticino, where we have enough data to give a decent forecast.
+
+In summary, the automatic ARIMA model is simple but very powerful for our current forecasts, especially for Vaud. We will keep working on modeling for Ticino, as this canton has very few visitors and therefore high variance, which will always provide some noise even after all cleaning and refining new data and variables.

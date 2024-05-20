@@ -28,7 +28,7 @@ The primary objectives of this project are:
 
 -   To forecast the total number of visitors to the canton of Vaud from October 2023 to December 2024.
 
--   To forecast the number of visitors from the Philippines to the canton of Ticino for the same period. 
+-   To forecast the number of visitors from the Philippines to the canton of Ticino for the same period.
 
 We aim to compare different time series models and include exogenous variables to improve forecast accuracy.
 
@@ -214,7 +214,7 @@ ticino_fc |> autoplot(ticino_df) +
   xlab("Months")
 ```
 
-We notice that the forecast for Vaud visitors is quite precise, with a very small confidence interval. The model accounts for seasonality as well as the upwards trend. On the other hand, the forecast for Ticino visitors is very basic, resembling a naive model with a slight upwards trend, and without seasonality. 
+We notice that the forecast for Vaud visitors is quite precise, with a very small confidence interval. The model accounts for seasonality as well as the upwards trend. On the other hand, the forecast for Ticino visitors is very basic, resembling a naive model with a slight upwards trend, and without seasonality.
 
 To improve our current model, we decided to add exogenous variables that we think are likely to impact the number of tourists in a region. The first exogenous variable is GDP per capita in Vaud and Ticino. The hypothesis we're making is that higher GDP will boost tourism. Looking at the overall visitors plot, we notice that there are considerably more visitors during summer months, when the weather is warm and precipitation is low, than in winter. This is why we've chosen the second and third exogenous variables to be temperature and precipitation. For Vaud, we use the monthly average temperature and precipitaion in the city of Payerne as a proxy for the canton. We do the same with the city of Lugano for Ticino.
 
@@ -408,36 +408,44 @@ After modeling the forecasts for both Vaud and Ticino, we will opt for our first
 
 For the Ticino model, the amount of visitors is so low, and the variance is so high, that even the automatic ARIMA model has difficulty forecasting the future, and the confidence levels are very high. We thought about using a mean or naive model for this forecast, but these would not take into account the upwards trend in visitors, which we assume to be true. Finally, for this forecast we will also go with the automatic ARIMA model.
 
-
 # Limits and Discussion
-
-
 
 # Appendix
 
 Vaud scatterplot matrix to see relationship between variables
+
 ```{r}
 print(vaud_scatterplot_matrix)
 
 ```
+
 Vaud ACF plot
+
 ```{r}
 vaud_p1 + vaud_p2
 ```
+
 Vaud STL decomposition
+
 ```{r}
 components(vaud_df_stl) %>% autoplot()
 
 ```
+
 Ticino scatterplot matrix to see relationship between variables
+
 ```{r}
 print(ticino_scatterplot_matrix)
 ```
+
 Ticino ACF plot
+
 ```{r}
 ticino_p1 + ticino_p2
 ```
+
 Ticino STL decomposition
+
 ```{r}
 components(ticino_df_stl) %>% autoplot()
 ```
