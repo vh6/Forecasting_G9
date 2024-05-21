@@ -1,0 +1,759 @@
+---
+title: "Swiss Tourism - Forecasting visitors from 10/2023 to 12/2024"
+author: "Victor Hogan, Reisa Reçi, Valentin Schick"
+
+format:
+  pdf:
+    toc: true
+    number-sections: true
+    colorlinks: true
+editor: source
+---
+
+```{r, error=FALSE, message=FALSE, warning=FALSE, echo=FALSE}
+# Load packages
+library(tidyverse)
+library(lubridate)
+library(fpp3)
+library(stats)
+library(dplyr)
+library(ggplot2)
+library(fable)
+library(tsibble)
+library(fabletools)
+library(patchwork)
+library(feasts)
+```
+
+# Introduction
+
+Tourism is a significant sector for Switzerland's economy, contributing greatly to its GDP and employment. Accurate forecasting of tourist arrivals is essential for effective planning and decision-making in the tourism industry. This project aims to predict the total number of visitors to Vaud from October 2023 to December 2024 as well as the number of visitors from the Philippines to Ticino during the same period. Utilizing historical data from 2005 to September 2023, we apply various forecasting techniques, integrating exogenous variables such as GDP and weather conditions to enhance the accuracy of our predictions.
+
+## Objectives
+
+The primary objectives of this project are:
+
+-   To forecast the total number of visitors to the canton of Vaud from October 2023 to December 2024.
+
+-   To forecast the number of visitors from the Philippines to the canton of Ticino for the same period.
+
+We aim to compare different time series models and include exogenous variables to improve forecast accuracy.
+
+# EDA
+
+Before plotting the data, we translate german months to english, and create a date type column.
+
+```{r, error=FALSE, message=FALSE, warning=FALSE, echo=FALSE}
+setwd("~/GitHub/Forecasting_G9/Project 1")
+# Load data
+df <- read.csv("Dataset_tourism.csv", stringsAsFactors = FALSE)
+payerne_weather <- read.csv("payerne.weather.csv")
+GDP.Vaud <- read.csv("Gdp.Vaud.csv")
+Lugano_weather <- read.csv("Lugano.weather.csv")
+GDP.Ticino <- read.csv("Gdp.Ticino.csv") 
+
+# Translate Monat column to English
+german_months <- c("Januar", "Februar", "M\xe4rz", "April", "Mai", "Juni", 
+                   "Juli", "August", "September", "Oktober", "November", "Dezember")
+english_months <- month.name
+
+# Replace German month names with English month names
+df$Monat <- factor(df$Monat, levels = german_months, labels = english_months)
+
+# Check if any month translations have failed leading to NAs
+if(any(is.na(df$Monat))) {
+  warning("NA values found in month translation. Check 'Monat' levels and labels.")
+}
+df$date <- ymd(paste(df$Jahr, df$Monat, "01", sep = "-"))
+if(any(is.na(df$date))) {
+  warning("NA values found in 'date' creation. Check 'Jahr', 'Monat' concatenation.")
+}
+
+# Count NAs
+#sum(is.na(df$Jahr)) # 0 NAs
+#sum(is.na(df$Monat)) # 0 NAs
+#sum(is.na(df$date)) # 0 NAs
+##sum(is.na(df$value)) # 51395 NAs
+#sum(is.na(df$Kanton)) # 0 NAs
+#sum(is.na(df$Herkunftsland)) # 0 NAs
+```
+
+Here we plot the total visitors for canton Vaud for the entire time frame.
+
+```{r, error=FALSE, message=FALSE, warning=FALSE, echo=FALSE}
+# Subset dataframe to remove nationalities and cantons, and keep totals.
+vaud_df <- df[df$Herkunftsland == "Herkunftsland - Total" & df$Kanton == "Vaud", ]
+
+# Transform df to tsibble
+vaud_df <- tsibble(vaud_df, index = date)
+
+# Plot visitors
+vaud_df |> autoplot(value) +
+  ggtitle("Monthly visitors to Vaud") +
+  ylab("Visitors") +
+  xlab("Months")
+
+```
+
+The time series plot of monthly visitors to Vaud from 2005 to 2023 reveals several key insights. There is a clear upward trend in visitor numbers, indicating growing tourism. The plot shows strong seasonal patterns, with regular peaks and troughs each year, reflecting typical tourist activity periods. A significant drop in visitors during the COVID-19 pandemic (2020-2022) is evident, illustrating the impact of global travel restrictions. Post-pandemic, visitor numbers recover, though with some variability. This highlights the need to account for trends, seasonality, and anomalies in our forecasting models.
+
+Below is the plot for visitors to Ticino, from the Philippines
+
+```{r, error=FALSE, message=FALSE, warning=FALSE, echo=FALSE}
+
+
+# Subset dataframe
+ticino_df <- df[df$Herkunftsland == "Philippinen" & df$Kanton == "Ticino", ]
+
+# Transform df to tsibble
+ticino_df <- tsibble(ticino_df, index = date)
+
+# Plot visitors
+ticino_df |> autoplot(value) +
+  ggtitle("Monthly visitors to Ticino from the Philippines") +
+  ylab("Visitors") +
+  xlab("Months")
+```
+
+As the number of visitors is greatly reduced compared to the previous plot, we observe much more variability in the number of visitors across months. It is hard to make out any seasonality with the naked eye, but we do notice an upwards trend. The effect of COVID is also very noticeable, with a dip in the number of visitors between 2020 and 2022.
+
+We produced an STL decomposition that highlighted the separate influences of trend, seasonality, and irregular components, as well as ACF and PACF plots that provided insight into autocorrelation. We also made scatterplot matrices to indicate the relationships between visitor numbers and exogenous variables (GDP, temperature and precipitation) presented in the modeling section. These plots are in the appendix.
+
+# Data cleaning/wrangling
+
+We consider COVID to be a black swan, and a unique event, and we will assume that it will not happen again during the period that we are predicting (Oct 23 - Dec 24). Knowing this, we decided it would be best to completely remove the data during the lockdown period, as it would bias our forecasts. Lockdown in Switzerland started in March 2020, and all measures except masks were lifted indefinitely in February 2022, which gives us lockdown period of exactly 2 years. It's important that the data we remove is in multiples of 12 months, as it won't affect seasonality. To implement this, we create a new dummy variable called covid to our data frame, that will be set equal to 1 during this time frame, and 0 everywhere else.
+
+We then remove all the data where covid = 1, and add 2 years to the data before March 2020, so there are no gaps in our tsibble. Below are plots for both cases.
+
+```{r, error=FALSE, message=FALSE, warning=FALSE, echo=FALSE}
+
+# Add dummy variable covid, set to 1 between March 2020 and Feb 2022, 0 everywhere else.
+vaud_df$covid <- ifelse(vaud_df$date >= ymd("2020-03-01") & vaud_df$date <= ymd("2022-02-01"), 1, 0)
+
+# Create no covid tsibble
+vaud_df_nocovid <- vaud_df
+vaud_df_nocovid$value[vaud_df_nocovid$covid == 1] <- NA
+
+#df_nocovid |> autoplot(value) +
+#  ggtitle("Monthly visitors to Vaud") +
+#  ylab("Visitors") +
+#  xlab("Months")
+
+# Since the COVID period is exactly 2 years, we can try to "stick" the before and after values together, so we have a time series without gaps, and this won't affect seasonality.
+
+# Drop covid rows
+vaud_df_nocovid <- vaud_df_nocovid[vaud_df_nocovid$covid != 1, ]
+
+# Add 2 years from data before covid
+vaud_df_nocovid$date[vaud_df_nocovid$date < ymd("2022-03-01")] <- vaud_df_nocovid$date[vaud_df_nocovid$date < ymd("2022-03-01")] + years(2)
+
+
+vaud_df_nocovid <- tsibble(vaud_df_nocovid, index = date)
+
+vaud_df_nocovid |> autoplot(value) +
+  ggtitle("Monthly visitors to Vaud") +
+  ylab("Visitors") +
+  xlab("Months")
+
+```
+
+```{r, error=FALSE, message=FALSE, warning=FALSE, echo=FALSE}
+
+# Add dummy variable covid, set to 1 between March 2020 and Feb 2022, 0 everywhere else.
+ticino_df$covid <- ifelse(ticino_df$date >= ymd("2020-03-01") & ticino_df$date <= ymd("2022-02-01"), 1, 0)
+
+# Create no covid tsibble
+ticino_df_nocovid <- ticino_df
+ticino_df_nocovid$value[ticino_df_nocovid$covid == 1] <- NA
+
+#df_nocovid |> autoplot(value) +
+#  ggtitle("Monthly visitors to ticino") +
+#  ylab("Visitors") +
+#  xlab("Months")
+
+# Since the COVID period is exactly 2 years, we can try to "stick" the before and after values together, so we have a time series without gaps, and this won't affect seasonality.
+
+# Drop covid rows
+ticino_df_nocovid <- ticino_df_nocovid[ticino_df_nocovid$covid != 1, ]
+
+# Add 2 years from data before covid
+ticino_df_nocovid$date[ticino_df_nocovid$date < ymd("2022-03-01")] <- ticino_df_nocovid$date[ticino_df_nocovid$date < ymd("2022-03-01")] + years(2)
+
+
+ticino_df_nocovid <- tsibble(ticino_df_nocovid, index = date)
+
+ticino_df_nocovid |> autoplot(value) +
+  ggtitle("Monthly visitors to Ticino from the Philippines") +
+  ylab("Visitors") +
+  xlab("Months")
+
+```
+
+# Modeling
+
+We decided first to make an automatic ARIMA model to forecast visitors. Below are the automatic ARIMA models, the AIC and BIC values, and the forecasts for both cases.
+
+```{r, error=FALSE, message=FALSE, warning=FALSE, echo=FALSE}
+# Now we can run models on the data without gaps and reset the dates afterwards.
+
+# Automatic ARIMA model
+vaud_df_nocovid$date <- yearmonth(vaud_df_nocovid$date)
+vaud_df_nocovid <- tsibble(vaud_df_nocovid, index = date)
+
+vaud_fit <- vaud_df_nocovid |> model(ARIMA(value))
+report(vaud_fit)
+
+vaud_fc <- vaud_fit |> forecast(h = "15 months")
+vaud_fc |> autoplot(vaud_df) +
+  ggtitle("Forecast of monthly visitors to Vaud") +
+  ylab("Visitors") +
+  xlab("Months")
+
+
+```
+
+```{r, error=FALSE, message=FALSE, warning=FALSE, echo=FALSE}
+# Now we can run models on the data without gaps and reset the dates afterwards.
+
+# Automatic ARIMA model
+ticino_df_nocovid$date <- yearmonth(ticino_df_nocovid$date)
+ticino_df_nocovid <- tsibble(ticino_df_nocovid, index = date)
+
+ticino_fit <- ticino_df_nocovid |> model(ARIMA(value))
+report(ticino_fit)
+
+ticino_fc <- ticino_fit |> forecast(h = "15 months")
+ticino_fc |> autoplot(ticino_df) +
+  ggtitle("Forecast of monthly visitors to ticino") +
+  ylab("Visitors") +
+  xlab("Months")
+
+
+```
+
+We notice that the forecast for Vaud visitors is quite precise, with a very small confidence interval. The model accounts for seasonality as well as the upwards trend. On the other hand, the forecast for Ticino visitors is very basic, resembling a naive model with a slight upwards trend, and without seasonality.
+
+To improve our current model, we decided to add exogenous variables that we think are likely to impact the number of tourists in a region. The first exogenous variable is GDP per capita in Vaud and Ticino. The hypothesis we're making is that higher GDP will boost tourism. Looking at the overall visitors plot, we notice that there are considerably more visitors during summer months, when the weather is warm and precipitation is low, than in winter. This is why we've chosen the second and third exogenous variables to be temperature and precipitation. For Vaud, we use the monthly average temperature and precipitaion in the city of Payerne as a proxy for the canton. We do the same with the city of Lugano for Ticino.
+
+Below are the ARIMA models using these exogenous variables, with the forecasts.
+
+```{r, error=FALSE, message=FALSE, warning=FALSE, echo=FALSE}
+# Regulating the Date variable to be possible to merge the datasets
+payerne_weather$Date <- as.Date(paste(payerne_weather$Year, payerne_weather$Month, "1", sep = "-"), "%Y-%m-%d")
+Vaud_df_nocovid <- vaud_df_nocovid %>%
+  mutate(Date = as.Date(paste0(format(date, "%Y-%m"), "-01"))) %>%
+  dplyr::select(-date)
+GDP.Vaud$Date <- as.Date(paste(GDP.Vaud$Date, "01", "01", sep = "-"), format = "%Y-%m-%d")
+missing_years <- as.Date(c("2005-01-01", "2006-01-01", "2007-01-01", "2022-01-01", "2023-01-01"))
+known_years <- unique(GDP.Vaud$Date)
+known_gdp <- GDP.Vaud$GDP.V[match(known_years, GDP.Vaud$Date)]
+full_years <- seq(from = min(c(known_years, missing_years)), 
+                  to = max(c(known_years, missing_years)), 
+                  by = "year")
+predicted_gdp <- spline(x = as.numeric(known_years), y = known_gdp, xout = as.numeric(full_years))
+GDP.Vaud <- data.frame(
+  Date = as.Date(paste(full_years, "-01-01", sep = "")),  
+  GDP.V = predicted_gdp$y
+)
+print(GDP.Vaud)
+#Merging the datasets
+str(Vaud_df_nocovid$Date)
+str(payerne_weather$Date)
+str(GDP.Vaud$Date)
+df_weather_merged <- Vaud_df_nocovid |> 
+  left_join(payerne_weather |>  dplyr::select(Date, Temperature, Precipitation), by = "Date")
+final_merged_data <- left_join(df_weather_merged, GDP.Vaud, by = "Date")
+str(final_merged_data)
+Canton.Vaud <- final_merged_data %>%
+  group_by(Jahr) %>%
+  mutate(
+    GDP.Jan = first(GDP.V[Monat == "January"], default = NA_real_)  
+  ) %>%
+  mutate(
+    GDP.V = if_else(Monat != "January", NA_real_, GDP.V), 
+    GDP.V = if_else(is.na(GDP.V), GDP.Jan, GDP.V)          
+  ) %>%
+  dplyr::select(-GDP.Jan)  
+Canton.Vaud<- Canton.Vaud %>%
+  fill(GDP.V, .direction = "downup") 
+
+#Fitting an automatic ARIMA model and plotting the forecast
+Canton.Vaud$Date <- yearmonth(Canton.Vaud$Date)
+Canton.Vaud_ts <- as_tsibble(Canton.Vaud, index = Date, key = Kanton)
+fit <- Canton.Vaud_ts |> 
+  model(ARIMA(value ~ GDP.V + Temperature + Precipitation))
+report(fit)
+
+#We repeat the process to plot the forecast 
+payerne_weather$Date <- as.Date(paste(payerne_weather$Year, payerne_weather$Month, "1", sep = "-"), "%Y-%m-%d")
+df <- vaud_df%>%
+  mutate(Date = as.Date(paste0(format(date, "%Y-%m"), "-01"))) %>%
+  dplyr::select(-date)
+GDP.Vaud$Date <- as.Date(paste(GDP.Vaud$Date, "01", "01", sep = "-"), format = "%Y-%m-%d")
+missing_years <- as.Date(c("2005-01-01", "2006-01-01", "2007-01-01", "2022-01-01", "2023-01-01"))
+known_years <- unique(GDP.Vaud$Date)
+known_gdp <- GDP.Vaud$GDP.V[match(known_years, GDP.Vaud$Date)]
+full_years <- seq(from = min(c(known_years, missing_years)), 
+                  to = max(c(known_years, missing_years)), 
+                  by = "year")
+predicted_gdp <- spline(x = as.numeric(known_years), y = known_gdp, xout = as.numeric(full_years))
+GDP.Vaud <- data.frame(
+  Date = as.Date(paste(full_years, "-01-01", sep = "")),  
+  GDP.V = predicted_gdp$y
+)
+print(GDP.Vaud)
+
+
+#Merging the datasets
+str(df$Date)
+str(payerne_weather$Date)
+str(GDP.Vaud$Date)
+df_weather_merged <- df |> 
+  left_join(payerne_weather |>  dplyr::select(Date, Temperature, Precipitation), by = "Date")
+final_merged_data <- left_join(df_weather_merged, GDP.Vaud, by = "Date")
+str(final_merged_data)
+Canton.Vaud <- final_merged_data %>%
+  group_by(Jahr) %>%
+  mutate(
+    GDP.Jan = first(GDP.V[Monat == "January"], default = NA_real_)  
+  ) %>%
+  mutate(
+    GDP.V = if_else(Monat != "January", NA_real_, GDP.V), 
+    GDP.V = if_else(is.na(GDP.V), GDP.Jan, GDP.V)          
+  ) %>%
+  dplyr::select(-GDP.Jan)  
+Canton.Vaud<- Canton.Vaud %>%
+  fill(GDP.V, .direction = "downup")
+#Fitting an automatic ARIMA model and plotting the forecast
+Canton.Vaud$Date <- yearmonth(Canton.Vaud$Date)
+Canton.Vaud_ts <- as_tsibble(Canton.Vaud, index = Date, key = Kanton)
+# Forecast for 15 months ahead using the model
+future_exogenous <- new_data(Canton.Vaud_ts, n = 15) %>%
+  mutate(
+    GDP.V = mean(Canton.Vaud_ts$GDP.V, na.rm = TRUE),  # Using mean for future values as example
+    Temperature = mean(Canton.Vaud_ts$Temperature, na.rm = TRUE),
+    Precipitation = mean(Canton.Vaud_ts$Precipitation, na.rm = TRUE)
+  )
+
+fc <- fit |> forecast(new_data = future_exogenous)
+autoplot(fc, Canton.Vaud_ts) +
+  ggtitle("Forecast of Monthly Values for Canton Vaud with ARIMA Model") +
+  ylab("Forecasted Value") +
+  xlab("Date")
+
+
+```
+
+```{r, error=FALSE, message=FALSE, warning=FALSE, echo=FALSE}
+# Regulating the Date variable to be possible to merge the datasets
+Lugano_weather$Date <- as.Date(paste(Lugano_weather$Year, Lugano_weather$Month, "1", sep = "-"), "%Y-%m-%d")
+Ticino_df_nocovid <-ticino_df_nocovid  |> 
+  mutate(Date = as.Date(date)) |> 
+  select(-date)  
+GDP.Ticino$Date <- as.Date(paste(GDP.Ticino$Date, "01", "01", sep = "-"), format = "%Y-%m-%d")
+known_years <- GDP.Ticino$Date
+known_gdp <- GDP.Ticino$GDP.T
+missing_years <- as.Date(c("2005-01-01", "2006-01-01", "2007-01-01", "2022-01-01", "2023-01-01"))
+full_years <- seq(min(c(known_years, missing_years)), max(c(known_years, missing_years)), by = "year")
+predicted_gdp <- spline(x = known_years, y = known_gdp, xout = full_years)
+GDP.Ticino <- data.frame(
+  Date = as.Date(paste(full_years, "-01-01", sep = "")),  
+  GDP.T = predicted_gdp$y)
+print(GDP.Ticino)
+#Merging the datasets
+str(Ticino_df_nocovid$Date)
+str(Lugano_weather$Date)
+str(GDP.Ticino$Date)
+df_weather_merged <- Ticino_df_nocovid |> 
+  left_join(Lugano_weather |>  dplyr::select(Date, Temperature, Precipitation), by = "Date")
+final_merged_data <- left_join(df_weather_merged, GDP.Ticino, by = "Date")
+str(final_merged_data)
+
+Canton.Ticino <- final_merged_data %>%
+  group_by(Jahr) %>%
+  mutate(
+    GDP.Jan = first(GDP.T[Monat == "January"], default = NA_real_)  
+  ) %>%
+  mutate(
+    GDP.T = if_else(Monat != "January", NA_real_, GDP.T), 
+    GDP.T = if_else(is.na(GDP.T), GDP.Jan, GDP.T)          
+  ) %>%
+  dplyr::select(-GDP.Jan)  
+Canton.Ticino<- Canton.Ticino %>%
+  fill(GDP.T, .direction = "downup")
+
+#Fitting an automatic ARIMA model and plotting the forecast
+Canton.Ticino$Date <- yearmonth(Canton.Ticino$Date)
+Canton.Ticino_ts <- as_tsibble(Canton.Ticino, index = Date, key = Kanton) 
+fit <- Canton.Ticino_ts |> 
+  model(ARIMA(value ~ GDP.T + Temperature + Precipitation))
+report(fit)
+
+# Regulating the Date variable to be possible to merge the datasets
+Lugano_weather$Date <- as.Date(paste(Lugano_weather$Year, Lugano_weather$Month, "1", sep = "-"), "%Y-%m-%d")
+df <-ticino_df |> 
+  mutate(Date = as.Date(date)) |> 
+  select(-date)  
+GDP.Ticino$Date <- as.Date(paste(GDP.Ticino$Date, "01", "01", sep = "-"), format = "%Y-%m-%d")
+known_years <- GDP.Ticino$Date
+known_gdp <- GDP.Ticino$GDP.T
+missing_years <- as.Date(c("2005-01-01", "2006-01-01", "2007-01-01", "2022-01-01", "2023-01-01"))
+full_years <- seq(min(c(known_years, missing_years)), max(c(known_years, missing_years)), by = "year")
+predicted_gdp <- spline(x = known_years, y = known_gdp, xout = full_years)
+GDP.Ticino <- data.frame(
+  Date = as.Date(paste(full_years, "-01-01", sep = "")),  
+  GDP.T = predicted_gdp$y)
+print(GDP.Ticino)
+#Merging the datasets
+str(ticino_df_nocovid$Date)
+str(Lugano_weather$Date)
+str(GDP.Ticino$Date)
+df_weather_merged <- df |> 
+  left_join(Lugano_weather |>  dplyr::select(Date, Temperature, Precipitation), by = "Date")
+final_merged_data <- left_join(df_weather_merged, GDP.Ticino, by = "Date")
+str(final_merged_data)
+Ticino.Vaud <- final_merged_data %>%
+  group_by(Jahr) %>%
+  mutate(
+    GDP.Jan = first(GDP.T[Monat == "January"], default = NA_real_)  
+  ) %>%
+  mutate(
+    GDP.T = if_else(Monat != "January", NA_real_, GDP.T), 
+    GDP.T = if_else(is.na(GDP.T), GDP.Jan, GDP.T)          
+  ) %>%
+  dplyr::select(-GDP.Jan)  
+Canton.Ticino<- Canton.Ticino %>%
+  fill(GDP.T, .direction = "downup")
+
+#Fitting an automatic ARIMA model and plotting the forecast
+Canton.Ticino$Date <- yearmonth(Canton.Ticino$Date)
+Canton.Ticino_ts <- as_tsibble(Canton.Ticino, index = Date, key = Kanton) 
+
+# Forecast for 15 months ahead using the model
+future_exogenous <- new_data(Canton.Ticino_ts, n = 15) %>%
+  mutate(
+    GDP.T = mean(Canton.Ticino_ts$GDP.T, na.rm = TRUE), 
+    Temperature = mean(Canton.Ticino_ts$Temperature, na.rm = TRUE),
+    Precipitation = mean(Canton.Ticino_ts$Precipitation, na.rm = TRUE)
+  )
+
+fc <- fit |> forecast(new_data = future_exogenous)
+autoplot(fc, Canton.Ticino_ts) +
+  ggtitle("Forecast of Monthly Values for Canton Ticino for Philipino visitors") +
+  ylab("Forecasted Value") +
+  xlab("Date")
+
+
+
+```
+
+We also created ETS models for both cantons, but these models cannot compete with our ARIMA models for reasons described in the next section. The forecasts are in the appendix for reference.
+
+
+```{r, error=FALSE, message=FALSE, warning=FALSE, echo=FALSE}
+library(knitr)
+
+# Ensure there are no NA values left in the datasets
+Canton.Vaud_ts <- Canton.Vaud_ts %>%
+  mutate(across(everything(), ~replace_na(., 0)))
+Canton.Ticino_ts <- Canton.Ticino_ts %>%
+  mutate(across(everything(), ~replace_na(., 0)))
+
+# Check if there are any NA values left
+print(sum(is.na(Canton.Vaud_ts))) # should be 0
+print(sum(is.na(Canton.Ticino_ts))) # should be 0
+
+# Split the data into training and testing sets
+train_end <- yearmonth("2022 Sep")
+test_start <- yearmonth("2022 Oct")
+
+# Vaud data
+vaud_train <- filter(Vaud_df_nocovid, Date <= train_end)
+vaud_test <- filter(Vaud_df_nocovid, Date >= test_start)
+
+# Fit the ARIMA model without exogenous variables on training data for Vaud
+vaud_fit_arima <- vaud_train %>% model(ARIMA(value))
+vaud_fc_arima <- vaud_fit_arima %>% forecast(new_data = vaud_test)
+
+# Fit the ARIMA model with exogenous variables on training data for Vaud
+Canton.Vaud_train <- filter(Canton.Vaud_ts, Date <= train_end)
+Canton.Vaud_test <- filter(Canton.Vaud_ts, Date >= test_start)
+vaud_fit_arima_exo <- Canton.Vaud_train %>% model(ARIMA(value ~ GDP.V + Temperature + Precipitation))
+vaud_fc_arima_exo <- vaud_fit_arima_exo %>% forecast(new_data = Canton.Vaud_test)
+
+# Fit the ETS model on training data for Vaud
+vaud_fit_ets <- vaud_train %>% model(ETS(value))
+vaud_fc_ets <- vaud_fit_ets %>% forecast(new_data = vaud_test)
+
+# Calculate accuracy metrics for Vaud
+accuracy_arima <- accuracy(vaud_fc_arima, vaud_test)
+accuracy_arima_exo <- accuracy(vaud_fc_arima_exo, Canton.Vaud_test)
+accuracy_ets <- accuracy(vaud_fc_ets, vaud_test)
+
+# Create data frames for accuracy metrics
+vaud_arima_metrics <- data.frame(
+  Model = "ARIMA without exogenous variables",
+  ME = accuracy_arima$ME,
+  RMSE = accuracy_arima$RMSE,
+  MAE = accuracy_arima$MAE,
+  MPE = accuracy_arima$MPE,
+  MAPE = accuracy_arima$MAPE,
+  MASE = accuracy_arima$MASE,
+  RMSSE = accuracy_arima$RMSSE,
+  ACF1 = accuracy_arima$ACF1
+)
+
+vaud_arimax_metrics <- data.frame(
+  Model = "ARIMA with exogenous variables",
+  ME = accuracy_arima_exo$ME,
+  RMSE = accuracy_arima_exo$RMSE,
+  MAE = accuracy_arima_exo$MAE,
+  MPE = accuracy_arima_exo$MPE,
+  MAPE = accuracy_arima_exo$MAPE,
+  MASE = accuracy_arima_exo$MASE,
+  RMSSE = accuracy_arima_exo$RMSSE,
+  ACF1 = accuracy_arima_exo$ACF1
+)
+
+vaud_ets_metrics <- data.frame(
+  Model = "ETS model",
+  ME = accuracy_ets$ME,
+  RMSE = accuracy_ets$RMSE,
+  MAE = accuracy_ets$MAE,
+  MPE = accuracy_ets$MPE,
+  MAPE = accuracy_ets$MAPE,
+  MASE = accuracy_ets$MASE,
+  RMSSE = accuracy_ets$RMSSE,
+  ACF1 = accuracy_ets$ACF1
+)
+
+# Combine data frames for Vaud
+vaud_metrics_combined <- rbind(vaud_arima_metrics, vaud_arimax_metrics, vaud_ets_metrics)
+
+# Ticino data
+ticino_train <- filter(Ticino_df_nocovid, Date <= train_end)
+ticino_test <- filter(Ticino_df_nocovid, Date >= test_start)
+
+# Fit the ARIMA model without exogenous variables on training data for Ticino
+ticino_fit_arima <- ticino_train %>% model(ARIMA(value))
+ticino_fc_arima <- ticino_fit_arima %>% forecast(new_data = ticino_test)
+
+# Fit the ARIMA model with exogenous variables on training data for Ticino
+Canton.Ticino_train <- filter(Canton.Ticino_ts, Date <= train_end)
+Canton.Ticino_test <- filter(Canton.Ticino_ts, Date >= test_start)
+ticino_fit_arima_exo <- Canton.Ticino_train %>% model(ARIMA(value ~ GDP.T + Temperature + Precipitation))
+ticino_fc_arima_exo <- ticino_fit_arima_exo %>% forecast(new_data = Canton.Ticino_test)
+
+# Fit the ETS model on training data for Ticino
+ticino_fit_ets <- ticino_train %>% model(ETS(value))
+ticino_fc_ets <- ticino_fit_ets %>% forecast(new_data = ticino_test)
+
+# Calculate accuracy metrics for Ticino
+accuracy_arima_ticino <- accuracy(ticino_fc_arima, ticino_test)
+accuracy_arima_exo_ticino <- accuracy(ticino_fc_arima_exo, Canton.Ticino_test)
+accuracy_ets_ticino <- accuracy(ticino_fc_ets, ticino_test)
+
+# Create data frames for accuracy metrics
+ticino_arima_metrics <- data.frame(
+  Model = "ARIMA without exogenous variables",
+  ME = accuracy_arima_ticino$ME,
+  RMSE = accuracy_arima_ticino$RMSE,
+  MAE = accuracy_arima_ticino$MAE,
+  MPE = accuracy_arima_ticino$MPE,
+  MAPE = accuracy_arima_ticino$MAPE,
+  MASE = accuracy_arima_ticino$MASE,
+  RMSSE = accuracy_arima_ticino$RMSSE,
+  ACF1 = accuracy_arima_ticino$ACF1
+)
+
+ticino_arimax_metrics <- data.frame(
+  Model = "ARIMA with exogenous variables",
+  ME = accuracy_arima_exo_ticino$ME,
+  RMSE = accuracy_arima_exo_ticino$RMSE,
+  MAE = accuracy_arima_exo_ticino$MAE,
+  MPE = accuracy_arima_exo_ticino$MPE,
+  MAPE = accuracy_arima_exo_ticino$MAPE,
+  MASE = accuracy_arima_exo_ticino$MASE,
+  RMSSE = accuracy_arima_exo_ticino$RMSSE,
+  ACF1 = accuracy_arima_exo_ticino$ACF1
+)
+
+ticino_ets_metrics <- data.frame(
+  Model = "ETS model",
+  ME = accuracy_ets_ticino$ME,
+  RMSE = accuracy_ets_ticino$RMSE,
+  MAE = accuracy_ets_ticino$MAE,
+  MPE = accuracy_ets_ticino$MPE,
+  MAPE = accuracy_ets_ticino$MAPE,
+  MASE = accuracy_ets_ticino$MASE,
+  RMSSE = accuracy_ets_ticino$RMSSE,
+  ACF1 = accuracy_ets_ticino$ACF1
+)
+
+# Combine data frames for Ticino
+ticino_metrics_combined <- rbind(ticino_arima_metrics, ticino_arimax_metrics, ticino_ets_metrics)
+
+# Display accuracy metrics as tables
+print("Accuracy Metrics for Vaud:")
+kable(vaud_metrics_combined, format = "markdown")
+
+print("Accuracy Metrics for Ticino:")
+kable(ticino_metrics_combined, format = "markdown")
+
+
+```
+
+
+
+The exogenous variables have coefficients indicating a positive relationship with the dependent variable, particularly significant for temperature. However, the AIC and BIC values are significantly higher than the automatic ARIMA model without exogenous variables in Vaud, indicating a more complex model without necessarily providing a proportionate improvement in fit as per the increase in complexity. For Ticino, the AIC is lower for our exogenous variables model.
+
+# Forecast and validation
+
+After modeling the forecasts for both Vaud and Ticino, we will opt for our first model, the automatic ARIMA, for Vaud. Firstly, this model is simpler than our exogenous variables model, and we generally prefer to use simpler models, unless our complex model is proven to have superior forecasts. In our case, we don't have the future data, so we are unable to measure the accuracy of both models. We can however look at indicators such as the AIC and BIC, which tell us that the simple model is superior in the case of Vaud, where we have enough data to make a decent forecast. This model also provided us with the lowest error metrics, including a Mean Absolute Percentage Error (MAPE) of 4.22% shown in the appendix.
+
+For the Ticino model, the amount of visitors is so low, and the variance is so high, that even the automatic ARIMA model has difficulty forecasting the future, and the confidence levels are very high. We thought about using a mean or naive model for this forecast, but these would not take into account the upwards trend in visitors, which we assume to be true. Although the ARIMAX (exogenous variables) model is more complex, it showed improvements in Root Mean Squared Error (RMSE) and Mean Absolute Error (MAE) over the simple ARIMA model. These accuracy metrics are shown in the appendix. The inclusion of GDP, temperature, and precipitation helped explain some of the variability in the visitor numbers, so we decided it would be more suitable to use this model for the Ticino forecast.
+
+In regards to our ETS models, the Vaud forecast is very similar to the automatic ARIMA model, but the confidence intervals are much too small, which is why we opted for ARIMA. For the Ticino forecast, the ETS model failed to take into account the upwards trend in visitors, so we opted for ARIMA with exogenous variables.
+
+# Analysis (reisa)
+
+In our analysis, we utilized three types of forecasting models: ARIMA, ARIMA with exogenous variables (ARIMAX), and ETS, each selected to address specific characteristics observed in the data.
+
+**ARIMA (AutoRegressive Integrated Moving Average) Model:**
+
+-   **Reason for Use:** ARIMA is a widely used time series forecasting method that can model various types of temporal data, effectively capturing trends and seasonality. It is particularly useful for data that show a clear, consistent pattern over time.
+
+-   **Implementation:** This model was applied to both Vaud and Ticino visitor data without including any exogenous variables, aiming to capture the inherent patterns and trends in the visitor numbers.
+
+**ARIMA with Exogenous Variables (ARIMAX) Model:**
+
+-   **Reason for Use:** ARIMAX extends the ARIMA model by incorporating external variables that might influence the target variable. This is beneficial when there are external factors known to impact the time series, such as economic indicators or weather conditions.
+
+-   **Exogenous Variables Included:**
+
+    -   GDP per capita: Hypothesized that higher GDP would boost tourism.
+
+    -   Temperature: Monthly average temperature (using Payerne for Vaud and Lugano for Ticino as proxies).
+
+    -   Precipitation: Monthly average precipitation (using Payerne for Vaud and Lugano for Ticino as proxies).
+
+-   **Implementation:** This model was used to potentially improve the forecasts for Ticino by explaining additional variability with these external factors.
+
+**ETS (Error, Trend, Seasonality) Model:**
+
+-   **Reason for Use:** The ETS model explicitly models the error, trend, and seasonality components of the time series. This approach is particularly useful when the data exhibit strong seasonal patterns.
+
+-   **Implementation:** ETS was applied to both Vaud and Ticino data to leverage its robust handling of seasonality and trends.
+
+**Model Improvements and Adjustments:**
+
+To improve our models, we added GDP, temperature, and precipitation as exogenous variables in the ARIMAX model to account for external influences that could impact the number of visitors. These variables were chosen based on their relevance to tourism patterns, with the expectation that better economic conditions and favorable weather would correlate with higher visitor numbers. Additionally, we addressed the impact of the COVID-19 pandemic by removing the data from March 2020 to February 2022 to avoid biasing our models with this anomaly, treating this period as a unique, non-recurring event.
+
+**Model Selection and Justification:**
+
+**Vaud Visitors Forecast:**
+
+-   **Chosen Model:** ARIMA without exogenous variables.
+
+-   **Justification:** This model provided the most accurate forecasts with the lowest error metrics, including a Mean Absolute Percentage Error (MAPE) of 4.22%. It effectively captured the seasonality and upward trend in the data with a simpler structure, as indicated by lower AIC and BIC values. The precision of this model, reflected in its small confidence intervals, makes it the best choice for forecasting Vaud visitors.
+
+**Ticino Visitors from the Philippines Forecast:**
+
+-   **Chosen Model:** ARIMA with exogenous variables.
+
+-   **Justification:** Although the ARIMAX model is more complex, it showed improvements in Root Mean Squared Error (RMSE) and Mean Absolute Error (MAE) over the simple ARIMA model. The inclusion of GDP, temperature, and precipitation helped explain some of the variability in the visitor numbers, making it more suitable for capturing the fluctuations and trends. Despite the inherent high variability and lower visitor volume, this model offers a better fit by accounting for relevant external factors. However, due to the high variability and low number of visitors, even the automatic ARIMA model faces challenges, and its confidence levels are very high. Simpler models like mean or naive models were considered, but they would not adequately capture the upward trend in visitors, which is assumed to be true.
+
+For Vaud Visitors, the ARIMA model without exogenous variables is recommended due to its superior accuracy, simplicity, and ability to capture key patterns in the data effectively. For Ticino Visitors from the Philippines, the ARIMA model with exogenous variables is preferred because it incorporates influential external factors, providing a better explanation of the data's variability. Despite the challenges due to high variability and low visitor numbers, this model remains the best option to capture the upward trend.
+
+These recommendations are based on a thorough analysis of both quantitative accuracy metrics and qualitative assessments of the forecast plots. By selecting these models, we aim to achieve reliable and insightful forecasts that can support tourism planning and decision-making in Vaud and Ticino.
+
+**EDA Insights Supporting Model Choices:**
+
+The time series plots revealed clear trends, seasonality, and the impact of COVID-19 on visitor numbers, informing our choice to use models that handle these aspects effectively. STL decomposition highlighted the separate influences of trend, seasonality, and irregular components, further supporting our model selections. ACF and PACF plots provided insight into the autocorrelation structure, guiding our model adjustments. The scatterplot matrix indicated the relationships between visitor numbers and exogenous variables, justifying their inclusion in the ARIMAX model for Ticino. These EDA findings collectively reinforced our modeling approach and choice of forecasting methods.
+
+# Limits and Discussion
+
+The forecasting models used in this analysis, including ARIMA, ARIMA with exogenous variables (ARIMAX), and ETS, each have their strengths and limitations. While ARIMA models effectively captured the seasonality and trends in the data, they assume linear relationships and stationarity, which may not always hold true. The ARIMAX models included GDP, temperature, and precipitation as exogenous variables to account for external influences on tourism, yet these proxies might not fully capture all relevant factors, such as political stability or marketing efforts. 
+
+Additionally, the exclusion of the COVID-19 period helped avoid anomalies but also introduced bias in understanding long-term trends. The ETS model, though robust in handling seasonality, faces similar limitations regarding assumptions and data quality. Future improvements could involve incorporating more exogenous variables, exploring advanced machine learning techniques, and continuously validating models with real-time data. External factors like economic conditions and climate change also play significant roles in tourism patterns and should be considered in long-term forecasts. 
+
+Despite these challenges, the selected models, automatic ARIMA without for Vaud and ARIMA with exogenous variables for Ticino, will hopefully provide decent forecasts to support tourism planning in these regions.
+
+# Appendix
+
+**Vaud scatterplot matrix to see relationship between variables**
+
+```{r}
+print(vaud_scatterplot_matrix)
+
+```
+
+**Vaud ACF plot**
+
+```{r}
+vaud_p1 + vaud_p2
+```
+
+**Vaud STL decomposition**
+
+```{r}
+components(vaud_df_stl) %>% autoplot()
+
+```
+
+**Ticino scatterplot matrix to see relationship between variables**
+
+```{r}
+print(ticino_scatterplot_matrix)
+```
+
+**Ticino ACF plot**
+
+```{r}
+ticino_p1 + ticino_p2
+```
+
+**Ticino STL decomposition**
+
+```{r}
+components(ticino_df_stl) %>% autoplot()
+```
+
+**Accuracy Metrics for Vaud**
+```{r}
+print(ticino_metrics_combined)
+```
+
+**Accuracy Metrics for Ticino**
+```{r}
+print(ticino_metrics_combined)
+```
+
+**ETS model for Vaud**
+```{r, error=FALSE, message=FALSE, warning=FALSE, echo=FALSE}
+# ETS Model for Vaud
+ets_fit_vaud <- vaud_df_nocovid |> model(ETS(value))
+report(ets_fit_vaud)
+
+ets_fc_vaud <- ets_fit_vaud |> forecast(h = "15 months")
+ets_fc_vaud |> autoplot(vaud_df) +
+  ggtitle("Forecast of monthly visitors to Vaud using ETS model") +
+  ylab("Visitors") +
+  xlab("Months")
+
+```
+
+
+**ETS Model for Ticino**
+```{r, error=FALSE, message=FALSE, warning=FALSE, echo=FALSE}
+# ETS Model for Ticino
+ets_fit_ticino <- ticino_df_nocovid |> model(ETS(value))
+report(ets_fit_ticino)
+
+ets_fc_ticino <- ets_fit_ticino |> forecast(h = "15 months")
+ets_fc_ticino |> autoplot(ticino_df) +
+  ggtitle("Forecast of monthly Filipino visitors to Ticino using ETS model") +
+  ylab("Visitors") +
+  xlab("Months")
+
+```
