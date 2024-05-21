@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.433">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>victor_report</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="report_victor 2_files/libs/clipboard/clipboard.min.js"></script>
+<script src="report_victor 2_files/libs/quarto-html/quarto.js"></script>
+<script src="report_victor 2_files/libs/quarto-html/popper.min.js"></script>
+<script src="report_victor 2_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="report_victor 2_files/libs/quarto-html/anchor.min.js"></script>
+<link href="report_victor 2_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="report_victor 2_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="report_victor 2_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="report_victor 2_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="report_victor 2_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">victor_report</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+</header>
+
+<section id="introduction" class="level1">
+<h1>Introduction</h1>
+<p>Tourism is a significant sector for Switzerland’s economy, contributing greatly to its GDP and employment. Accurate forecasting of tourist arrivals is essential for effective planning and decision-making in the tourism industry. This project aims to predict the total number of visitors to Vaud from October 2023 to December 2024 as well as the number of visitors from the Philippines to Ticino during the same period. Utilizing historical data from 2005 to September 2023, we apply various forecasting techniques, integrating exogenous variables such as GDP and weather conditions to enhance the accuracy of our predictions.</p>
+<section id="objectives" class="level2">
+<h2 class="anchored" data-anchor-id="objectives">Objectives</h2>
+<p>The primary objectives of this project are:</p>
+<ul>
+<li><p>To forecast the total number of visitors to the canton of Vaud from October 2023 to December 2024.</p></li>
+<li><p>To forecast the number of visitors from the Philippines to the canton of Ticino for the same period.</p></li>
+</ul>
+<p>We aim to compare different time series models and include exogenous variables to improve forecast accuracy.</p>
+</section>
+</section>
+<section id="eda" class="level1">
+<h1>EDA</h1>
+<p>Before plotting the data, we translate german months to english, and create a date type column.</p>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 51395</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0</code></pre>
+</div>
+</div>
+<p>Here we plot the total visitors for canton Vaud for the entire time frame.</p>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="report_victor-2_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>The time series plot of monthly visitors to Vaud from 2005 to 2023 reveals several key insights. There is a clear upward trend in visitor numbers, indicating growing tourism. The plot shows strong seasonal patterns, with regular peaks and troughs each year, reflecting typical tourist activity periods. A significant drop in visitors during the COVID-19 pandemic (2020-2022) is evident, illustrating the impact of global travel restrictions. Post-pandemic, visitor numbers recover, though with some variability. This highlights the need to account for trends, seasonality, and anomalies in our forecasting models.</p>
+<p>Below is the plot for visitors to Ticino, from the Philippines</p>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="report_victor-2_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>As the number of visitors is greatly reduced compared to the previous plot, we observe much more variability in the number of visitors across months. It is hard to make out any seasonality with the naked eye, but we do notice an upwards trend. The effect of COVID is also very noticeable, with a dip in the number of visitors between 2020 and 2022.</p>
+</section>
+<section id="data-cleaningwrangling" class="level1">
+<h1>Data cleaning/wrangling</h1>
+<p>We consider COVID to be a black swan, and a unique event, and we will assume that it will not happen again during the period that we are predicting (Oct 23 - Dec 24). Knowing this, we decided it would be best to completely remove the data during the lockdown period, as it would bias our forecasts. Lockdown in Switzerland started in March 2020, and all measures except masks were lifted indefinitely in February 2022, which gives us lockdown period of exactly 2 years. It’s important that the data we remove is in multiples of 12 months, as it won’t affect seasonality. To implement this, we create a new dummy variable called covid to our data frame, that will be set equal to 1 during this time frame, and 0 everywhere else.</p>
+<p>We then remove all the data where covid = 1, and add 2 years to the data before March 2020, so there are no gaps in our tsibble. Below are plots for both cases.</p>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="report_victor-2_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="report_victor-2_files/figure-html/unnamed-chunk-6-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+<section id="modeling" class="level1">
+<h1>Modeling</h1>
+<p>We decided first to make an automatic ARIMA model to forecast visitors. Below are the automatic ARIMA models, the AIC and BIC values, and the forecasts for both cases.</p>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>Series: value 
+Model: ARIMA(0,0,3)(0,1,2)[12] w/ drift 
+
+Coefficients:
+         ma1     ma2     ma3     sma1     sma2   constant
+      0.3819  0.3574  0.3019  -0.5603  -0.1391  2672.4410
+s.e.  0.0730  0.0698  0.0677   0.0770   0.0722   242.7348
+
+sigma^2 estimated as 20137890:  log likelihood=-1858.22
+AIC=3730.44   AICc=3731.06   BIC=3753.13</code></pre>
+</div>
+<div class="cell-output-display">
+<p><img src="report_victor-2_files/figure-html/unnamed-chunk-7-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>Series: value 
+Model: ARIMA(0,1,2) w/ drift 
+
+Coefficients:
+          ma1      ma2  constant
+      -0.8049  -0.0963    0.3780
+s.e.   0.0657   0.0688    0.1947
+
+sigma^2 estimated as 651.7:  log likelihood=-931.03
+AIC=1870.05   AICc=1870.26   BIC=1883.25</code></pre>
+</div>
+<div class="cell-output-display">
+<p><img src="report_victor-2_files/figure-html/unnamed-chunk-8-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>We notice that the forecast for Vaud visitors is quite precise, with a very small confidence interval. The model accounts for seasonality as well as the upwards trend. On the other hand, the forecast for Ticino visitors is very basic, resembling a naive model with a slight upwards trend, and without seasonality.</p>
+<p>To improve our current model, we decided to add exogenous variables that we think are likely to impact the number of tourists in a region. The first exogenous variable is GDP per capita in Vaud and Ticino. The hypothesis we’re making is that higher GDP will boost tourism. Looking at the overall visitors plot, we notice that there are considerably more visitors during summer months, when the weather is warm and precipitation is low, than in winter. This is why we’ve chosen the second and third exogenous variables to be temperature and precipitation. For Vaud, we use the monthly average temperature and precipitaion in the city of Payerne as a proxy for the canton. We do the same with the city of Lugano for Ticino.</p>
+<p>Below are the ARIMA models using these exogenous variables, with the forecasts.</p>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>Series: value 
+Model: LM w/ ARIMA(0,1,4)(0,0,2)[12] errors 
+
+Coefficients:
+          ma1     ma2      ma3      ma4    sma1    sma2    GDP.V  Temperature
+      -0.3554  0.0531  -0.0828  -0.4986  0.7157  0.5602  -0.0302     653.7395
+s.e.   0.0737  0.0694   0.0731   0.0668  0.0869  0.0700   0.1592     242.5833
+      Precipitation
+           -12.1293
+s.e.         8.8688
+
+sigma^2 estimated as 44217798:  log likelihood=-1951.09
+AIC=3922.17   AICc=3923.34   BIC=3955.16</code></pre>
+</div>
+<div class="cell-output-display">
+<p><img src="report_victor-2_files/figure-html/unnamed-chunk-9-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>Series: value 
+Model: LM w/ ARIMA(0,1,1) errors 
+
+Coefficients:
+          ma1  GDP.T  Temperature  Precipitation  intercept
+      -0.9604  4e-04       1.1101         0.0160     0.2130
+s.e.   0.0257  1e-04       0.2562         0.0176     0.0829
+
+sigma^2 estimated as 506.7:  log likelihood=-865.04
+AIC=1742.08   AICc=1742.51   BIC=1761.87</code></pre>
+</div>
+<div class="cell-output-display">
+<p><img src="report_victor-2_files/figure-html/unnamed-chunk-10-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>Series: value 
+Model: ETS(M,A,M) 
+  Smoothing parameters:
+    alpha = 0.2115592 
+    beta  = 0.0001000386 
+    gamma = 0.2227596 
+
+  Initial states:
+     l[0]     b[0]      s[0]     s[-1]     s[-2]    s[-3]    s[-4]    s[-5]
+ 83355.95 250.2777 0.7641147 0.7684332 0.9651906 1.203249 1.243203 1.375393
+    s[-6]    s[-7]     s[-8]     s[-9]    s[-10]    s[-11]
+ 1.210834 1.091756 0.8742811 0.9479082 0.8226419 0.7329945
+
+  sigma^2:  0.0019
+
+     AIC     AICc      BIC 
+4452.547 4455.892 4508.704 </code></pre>
+</div>
+<div class="cell-output-display">
+<p><img src="report_victor-2_files/figure-html/unnamed-chunk-11-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>Series: value 
+Model: ETS(A,N,N) 
+  Smoothing parameters:
+    alpha = 0.1563349 
+
+  Initial states:
+     l[0]
+ 6.415333
+
+  sigma^2:  660.4141
+
+     AIC     AICc      BIC 
+2375.021 2375.142 2384.930 </code></pre>
+</div>
+<div class="cell-output-display">
+<p><img src="report_victor-2_files/figure-html/unnamed-chunk-12-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create data frames for accuracy metrics</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>vaud_arima_metrics <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">Model =</span> <span class="st">"ARIMA without exogenous variables"</span>,</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">ME =</span> <span class="dv">2270</span>,</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">RMSE =</span> <span class="dv">6072</span>,</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">MAE =</span> <span class="dv">5238</span>,</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">MPE =</span> <span class="fl">1.00</span>,</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">MAPE =</span> <span class="fl">4.22</span>,</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">MASE =</span> <span class="cn">NA</span>,</span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">RMSSE =</span> <span class="cn">NA</span>,</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">ACF1 =</span> <span class="fl">0.488</span></span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>vaud_arimax_metrics <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">Model =</span> <span class="st">"ARIMA with exogenous variables"</span>,</span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">ME =</span> <span class="sc">-</span><span class="dv">948</span>,</span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">RMSE =</span> <span class="dv">12917</span>,</span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>  <span class="at">MAE =</span> <span class="dv">11824</span>,</span>
+<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">MPE =</span> <span class="sc">-</span><span class="fl">3.03</span>,</span>
+<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">MAPE =</span> <span class="fl">10.1</span>,</span>
+<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a>  <span class="at">MASE =</span> <span class="cn">NA</span>,</span>
+<span id="cb15-22"><a href="#cb15-22" aria-hidden="true" tabindex="-1"></a>  <span class="at">RMSSE =</span> <span class="cn">NA</span>,</span>
+<span id="cb15-23"><a href="#cb15-23" aria-hidden="true" tabindex="-1"></a>  <span class="at">ACF1 =</span> <span class="fl">0.613</span></span>
+<span id="cb15-24"><a href="#cb15-24" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb15-25"><a href="#cb15-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-26"><a href="#cb15-26" aria-hidden="true" tabindex="-1"></a>vaud_ets_metrics <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb15-27"><a href="#cb15-27" aria-hidden="true" tabindex="-1"></a>  <span class="at">Model =</span> <span class="st">"ETS model"</span>,</span>
+<span id="cb15-28"><a href="#cb15-28" aria-hidden="true" tabindex="-1"></a>  <span class="at">ME =</span> <span class="dv">8952</span>,</span>
+<span id="cb15-29"><a href="#cb15-29" aria-hidden="true" tabindex="-1"></a>  <span class="at">RMSE =</span> <span class="dv">10931</span>,</span>
+<span id="cb15-30"><a href="#cb15-30" aria-hidden="true" tabindex="-1"></a>  <span class="at">MAE =</span> <span class="dv">9614</span>,</span>
+<span id="cb15-31"><a href="#cb15-31" aria-hidden="true" tabindex="-1"></a>  <span class="at">MPE =</span> <span class="fl">6.80</span>,</span>
+<span id="cb15-32"><a href="#cb15-32" aria-hidden="true" tabindex="-1"></a>  <span class="at">MAPE =</span> <span class="fl">7.44</span>,</span>
+<span id="cb15-33"><a href="#cb15-33" aria-hidden="true" tabindex="-1"></a>  <span class="at">MASE =</span> <span class="cn">NA</span>,</span>
+<span id="cb15-34"><a href="#cb15-34" aria-hidden="true" tabindex="-1"></a>  <span class="at">RMSSE =</span> <span class="cn">NA</span>,</span>
+<span id="cb15-35"><a href="#cb15-35" aria-hidden="true" tabindex="-1"></a>  <span class="at">ACF1 =</span> <span class="fl">0.266</span></span>
+<span id="cb15-36"><a href="#cb15-36" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb15-37"><a href="#cb15-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-38"><a href="#cb15-38" aria-hidden="true" tabindex="-1"></a>ticino_arima_metrics <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb15-39"><a href="#cb15-39" aria-hidden="true" tabindex="-1"></a>  <span class="at">Model =</span> <span class="st">"ARIMA without exogenous variables"</span>,</span>
+<span id="cb15-40"><a href="#cb15-40" aria-hidden="true" tabindex="-1"></a>  <span class="at">ME =</span> <span class="fl">45.2</span>,</span>
+<span id="cb15-41"><a href="#cb15-41" aria-hidden="true" tabindex="-1"></a>  <span class="at">RMSE =</span> <span class="fl">71.5</span>,</span>
+<span id="cb15-42"><a href="#cb15-42" aria-hidden="true" tabindex="-1"></a>  <span class="at">MAE =</span> <span class="fl">53.4</span>,</span>
+<span id="cb15-43"><a href="#cb15-43" aria-hidden="true" tabindex="-1"></a>  <span class="at">MPE =</span> <span class="fl">24.8</span>,</span>
+<span id="cb15-44"><a href="#cb15-44" aria-hidden="true" tabindex="-1"></a>  <span class="at">MAPE =</span> <span class="fl">58.7</span>,</span>
+<span id="cb15-45"><a href="#cb15-45" aria-hidden="true" tabindex="-1"></a>  <span class="at">MASE =</span> <span class="cn">NA</span>,</span>
+<span id="cb15-46"><a href="#cb15-46" aria-hidden="true" tabindex="-1"></a>  <span class="at">RMSSE =</span> <span class="cn">NA</span>,</span>
+<span id="cb15-47"><a href="#cb15-47" aria-hidden="true" tabindex="-1"></a>  <span class="at">ACF1 =</span> <span class="fl">0.00267</span></span>
+<span id="cb15-48"><a href="#cb15-48" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb15-49"><a href="#cb15-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-50"><a href="#cb15-50" aria-hidden="true" tabindex="-1"></a>ticino_arimax_metrics <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb15-51"><a href="#cb15-51" aria-hidden="true" tabindex="-1"></a>  <span class="at">Model =</span> <span class="st">"ARIMA with exogenous variables"</span>,</span>
+<span id="cb15-52"><a href="#cb15-52" aria-hidden="true" tabindex="-1"></a>  <span class="at">ME =</span> <span class="fl">19.5</span>,</span>
+<span id="cb15-53"><a href="#cb15-53" aria-hidden="true" tabindex="-1"></a>  <span class="at">RMSE =</span> <span class="fl">57.1</span>,</span>
+<span id="cb15-54"><a href="#cb15-54" aria-hidden="true" tabindex="-1"></a>  <span class="at">MAE =</span> <span class="fl">41.0</span>,</span>
+<span id="cb15-55"><a href="#cb15-55" aria-hidden="true" tabindex="-1"></a>  <span class="at">MPE =</span> <span class="sc">-</span><span class="fl">15.0</span>,</span>
+<span id="cb15-56"><a href="#cb15-56" aria-hidden="true" tabindex="-1"></a>  <span class="at">MAPE =</span> <span class="fl">59.8</span>,</span>
+<span id="cb15-57"><a href="#cb15-57" aria-hidden="true" tabindex="-1"></a>  <span class="at">MASE =</span> <span class="cn">NA</span>,</span>
+<span id="cb15-58"><a href="#cb15-58" aria-hidden="true" tabindex="-1"></a>  <span class="at">RMSSE =</span> <span class="cn">NA</span>,</span>
+<span id="cb15-59"><a href="#cb15-59" aria-hidden="true" tabindex="-1"></a>  <span class="at">ACF1 =</span> <span class="sc">-</span><span class="fl">0.144</span></span>
+<span id="cb15-60"><a href="#cb15-60" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb15-61"><a href="#cb15-61" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-62"><a href="#cb15-62" aria-hidden="true" tabindex="-1"></a>ticino_ets_metrics <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb15-63"><a href="#cb15-63" aria-hidden="true" tabindex="-1"></a>  <span class="at">Model =</span> <span class="st">"ETS model"</span>,</span>
+<span id="cb15-64"><a href="#cb15-64" aria-hidden="true" tabindex="-1"></a>  <span class="at">ME =</span> <span class="fl">45.2</span>,</span>
+<span id="cb15-65"><a href="#cb15-65" aria-hidden="true" tabindex="-1"></a>  <span class="at">RMSE =</span> <span class="fl">71.5</span>,</span>
+<span id="cb15-66"><a href="#cb15-66" aria-hidden="true" tabindex="-1"></a>  <span class="at">MAE =</span> <span class="fl">53.4</span>,</span>
+<span id="cb15-67"><a href="#cb15-67" aria-hidden="true" tabindex="-1"></a>  <span class="at">MPE =</span> <span class="fl">25.0</span>,</span>
+<span id="cb15-68"><a href="#cb15-68" aria-hidden="true" tabindex="-1"></a>  <span class="at">MAPE =</span> <span class="fl">58.5</span>,</span>
+<span id="cb15-69"><a href="#cb15-69" aria-hidden="true" tabindex="-1"></a>  <span class="at">MASE =</span> <span class="cn">NA</span>,</span>
+<span id="cb15-70"><a href="#cb15-70" aria-hidden="true" tabindex="-1"></a>  <span class="at">RMSSE =</span> <span class="cn">NA</span>,</span>
+<span id="cb15-71"><a href="#cb15-71" aria-hidden="true" tabindex="-1"></a>  <span class="at">ACF1 =</span> <span class="fl">0.00504</span></span>
+<span id="cb15-72"><a href="#cb15-72" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb15-73"><a href="#cb15-73" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-74"><a href="#cb15-74" aria-hidden="true" tabindex="-1"></a><span class="co"># Combine data frames for Vaud and Ticino</span></span>
+<span id="cb15-75"><a href="#cb15-75" aria-hidden="true" tabindex="-1"></a>vaud_metrics_combined <span class="ot">&lt;-</span> <span class="fu">rbind</span>(vaud_arima_metrics, vaud_arimax_metrics, vaud_ets_metrics)</span>
+<span id="cb15-76"><a href="#cb15-76" aria-hidden="true" tabindex="-1"></a>ticino_metrics_combined <span class="ot">&lt;-</span> <span class="fu">rbind</span>(ticino_arima_metrics, ticino_arimax_metrics, ticino_ets_metrics)</span>
+<span id="cb15-77"><a href="#cb15-77" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-78"><a href="#cb15-78" aria-hidden="true" tabindex="-1"></a><span class="co"># Print the tables</span></span>
+<span id="cb15-79"><a href="#cb15-79" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="st">"Accuracy Metrics for Vaud"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Accuracy Metrics for Vaud"</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(vaud_metrics_combined)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                              Model   ME  RMSE   MAE   MPE  MAPE MASE RMSSE
+1 ARIMA without exogenous variables 2270  6072  5238  1.00  4.22   NA    NA
+2    ARIMA with exogenous variables -948 12917 11824 -3.03 10.10   NA    NA
+3                         ETS model 8952 10931  9614  6.80  7.44   NA    NA
+   ACF1
+1 0.488
+2 0.613
+3 0.266</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="st">"Accuracy Metrics for Ticino"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Accuracy Metrics for Ticino"</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(ticino_metrics_combined)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                              Model   ME RMSE  MAE   MPE MAPE MASE RMSSE
+1 ARIMA without exogenous variables 45.2 71.5 53.4  24.8 58.7   NA    NA
+2    ARIMA with exogenous variables 19.5 57.1 41.0 -15.0 59.8   NA    NA
+3                         ETS model 45.2 71.5 53.4  25.0 58.5   NA    NA
+      ACF1
+1  0.00267
+2 -0.14400
+3  0.00504</code></pre>
+</div>
+</div>
+<p>The exogenous variables have coefficients indicating a positive relationship with the dependent variable, particularly significant for temperature. However, the AIC and BIC values are significantly higher than the automatic ARIMA model without exogenous variables, indicating a more complex model without necessarily providing a proportionate improvement in fit as per the increase in complexity.</p>
+</section>
+<section id="forecast-and-validation" class="level1">
+<h1>Forecast and validation</h1>
+<p>After modeling the forecasts for both Vaud and Ticino, we will opt for our first models, the automatic ARIMA, for several reasons. Firstly, this model is simpler than our exogenous variables model, and we generally prefer to use simpler models, unless our complex model is proven to have superior forecasts. In our case, we don’t have the future data, so we are unable to measure the accuracy of both models. We can however look at indicators such as the AIC and BIC, which tell us that the simple model is superior, especially in the case of Vaud, where we have enough data to make a decent forecast.</p>
+<p>For the Ticino model, the amount of visitors is so low, and the variance is so high, that even the automatic ARIMA model has difficulty forecasting the future, and the confidence levels are very high. We thought about using a mean or naive model for this forecast, but these would not take into account the upwards trend in visitors, which we assume to be true. Finally, for this forecast we will also go with the automatic ARIMA model.</p>
+</section>
+<section id="analysis-reisa" class="level1">
+<h1>Analysis (reisa)</h1>
+<p>In our analysis, we utilized three types of forecasting models: ARIMA, ARIMA with exogenous variables (ARIMAX), and ETS, each selected to address specific characteristics observed in the data.</p>
+<p><strong>ARIMA (AutoRegressive Integrated Moving Average) Model:</strong></p>
+<ul>
+<li><p><strong>Reason for Use:</strong> ARIMA is a widely used time series forecasting method that can model various types of temporal data, effectively capturing trends and seasonality. It is particularly useful for data that show a clear, consistent pattern over time.</p></li>
+<li><p><strong>Implementation:</strong> This model was applied to both Vaud and Ticino visitor data without including any exogenous variables, aiming to capture the inherent patterns and trends in the visitor numbers.</p></li>
+</ul>
+<p><strong>ARIMA with Exogenous Variables (ARIMAX) Model:</strong></p>
+<ul>
+<li><p><strong>Reason for Use:</strong> ARIMAX extends the ARIMA model by incorporating external variables that might influence the target variable. This is beneficial when there are external factors known to impact the time series, such as economic indicators or weather conditions.</p></li>
+<li><p><strong>Exogenous Variables Included:</strong></p>
+<ul>
+<li><p>GDP per capita: Hypothesized that higher GDP would boost tourism.</p></li>
+<li><p>Temperature: Monthly average temperature (using Payerne for Vaud and Lugano for Ticino as proxies).</p></li>
+<li><p>Precipitation: Monthly average precipitation (using Payerne for Vaud and Lugano for Ticino as proxies).</p></li>
+</ul></li>
+<li><p><strong>Implementation:</strong> This model was used to potentially improve the forecasts for Ticino by explaining additional variability with these external factors.</p></li>
+</ul>
+<p><strong>ETS (Error, Trend, Seasonality) Model:</strong></p>
+<ul>
+<li><p><strong>Reason for Use:</strong> The ETS model explicitly models the error, trend, and seasonality components of the time series. This approach is particularly useful when the data exhibit strong seasonal patterns.</p></li>
+<li><p><strong>Implementation:</strong> ETS was applied to both Vaud and Ticino data to leverage its robust handling of seasonality and trends.</p></li>
+</ul>
+<p><strong>Model Improvements and Adjustments:</strong></p>
+<p>To improve our models, we added GDP, temperature, and precipitation as exogenous variables in the ARIMAX model to account for external influences that could impact the number of visitors. These variables were chosen based on their relevance to tourism patterns, with the expectation that better economic conditions and favorable weather would correlate with higher visitor numbers. Additionally, we addressed the impact of the COVID-19 pandemic by removing the data from March 2020 to February 2022 to avoid biasing our models with this anomaly, treating this period as a unique, non-recurring event.</p>
+<p><strong>Model Selection and Justification:</strong></p>
+<p><strong>Vaud Visitors Forecast:</strong></p>
+<ul>
+<li><p><strong>Chosen Model:</strong> ARIMA without exogenous variables.</p></li>
+<li><p><strong>Justification:</strong> This model provided the most accurate forecasts with the lowest error metrics, including a Mean Absolute Percentage Error (MAPE) of 4.22%. It effectively captured the seasonality and upward trend in the data with a simpler structure, as indicated by lower AIC and BIC values. The precision of this model, reflected in its small confidence intervals, makes it the best choice for forecasting Vaud visitors.</p></li>
+</ul>
+<p><strong>Ticino Visitors from the Philippines Forecast:</strong></p>
+<ul>
+<li><p><strong>Chosen Model:</strong> ARIMA with exogenous variables.</p></li>
+<li><p><strong>Justification:</strong> Although the ARIMAX model is more complex, it showed improvements in Root Mean Squared Error (RMSE) and Mean Absolute Error (MAE) over the simple ARIMA model. The inclusion of GDP, temperature, and precipitation helped explain some of the variability in the visitor numbers, making it more suitable for capturing the fluctuations and trends. Despite the inherent high variability and lower visitor volume, this model offers a better fit by accounting for relevant external factors. However, due to the high variability and low number of visitors, even the automatic ARIMA model faces challenges, and its confidence levels are very high. Simpler models like mean or naive models were considered, but they would not adequately capture the upward trend in visitors, which is assumed to be true.</p></li>
+</ul>
+<p>For Vaud Visitors, the ARIMA model without exogenous variables is recommended due to its superior accuracy, simplicity, and ability to capture key patterns in the data effectively. For Ticino Visitors from the Philippines, the ARIMA model with exogenous variables is preferred because it incorporates influential external factors, providing a better explanation of the data’s variability. Despite the challenges due to high variability and low visitor numbers, this model remains the best option to capture the upward trend.</p>
+<p>These recommendations are based on a thorough analysis of both quantitative accuracy metrics and qualitative assessments of the forecast plots. By selecting these models, we aim to achieve reliable and insightful forecasts that can support tourism planning and decision-making in Vaud and Ticino.</p>
+<p><strong>EDA Insights Supporting Model Choices:</strong></p>
+<p>The time series plots revealed clear trends, seasonality, and the impact of COVID-19 on visitor numbers, informing our choice to use models that handle these aspects effectively. STL decomposition highlighted the separate influences of trend, seasonality, and irregular components, further supporting our model selections. ACF and PACF plots provided insight into the autocorrelation structure, guiding our model adjustments. The scatterplot matrix indicated the relationships between visitor numbers and exogenous variables, justifying their inclusion in the ARIMAX model for Ticino. These EDA findings collectively reinforced our modeling approach and choice of forecasting methods.</p>
+</section>
+<section id="limits-and-discussion" class="level1">
+<h1>Limits and Discussion</h1>
+<p>The forecasting models used in this analysis, including ARIMA, ARIMA with exogenous variables (ARIMAX), and ETS, each have their strengths and limitations. While ARIMA models effectively captured the seasonality and trends in the data, they assume linear relationships and stationarity, which may not always hold true. The ARIMAX models included GDP, temperature, and precipitation as exogenous variables to account for external influences on tourism, yet these proxies might not fully capture all relevant factors, such as political stability or marketing efforts. Additionally, the exclusion of the COVID-19 period helped avoid anomalies but also introduced bias in understanding long-term trends. The ETS model, though robust in handling seasonality, faces similar limitations regarding assumptions and data quality. Future improvements could involve incorporating more exogenous variables, exploring advanced machine learning techniques, and continuously validating models with real-time data. External factors like economic conditions and climate change also play significant roles in tourism patterns and should be considered in long-term forecasts. Despite these challenges, the selected models, ARIMA without exogenous variables for Vaud and ARIMA with exogenous variables for Ticino, provide reliable and insightful forecasts to support tourism planning and decision-making in these regions.</p>
+</section>
+<section id="appendix" class="level1">
+<h1>Appendix</h1>
+<p>Vaud scatterplot matrix to see relationship between variables</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(vaud_scatterplot_matrix)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>`geom_smooth()` using formula = 'y ~ x'</code></pre>
+</div>
+<div class="cell-output-display">
+<p><img src="report_victor-2_files/figure-html/unnamed-chunk-15-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Vaud ACF plot</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>vaud_p1 <span class="sc">+</span> vaud_p2</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="report_victor-2_files/figure-html/unnamed-chunk-16-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Vaud STL decomposition</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">components</span>(vaud_df_stl) <span class="sc">%&gt;%</span> <span class="fu">autoplot</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="report_victor-2_files/figure-html/unnamed-chunk-17-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Ticino scatterplot matrix to see relationship between variables</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(ticino_scatterplot_matrix)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>`geom_smooth()` using formula = 'y ~ x'</code></pre>
+</div>
+<div class="cell-output-display">
+<p><img src="report_victor-2_files/figure-html/unnamed-chunk-18-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Ticino ACF plot</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>ticino_p1 <span class="sc">+</span> ticino_p2</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="report_victor-2_files/figure-html/unnamed-chunk-19-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Ticino STL decomposition</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="fu">components</span>(ticino_df_stl) <span class="sc">%&gt;%</span> <span class="fu">autoplot</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="report_victor-2_files/figure-html/unnamed-chunk-20-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>
